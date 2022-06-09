@@ -68,8 +68,8 @@ export default defineComponent({
 
     const displayShort = ref(true);
 
-    let cred = ref("Message loading.");
-    let credential = ref("Message loading.");
+    let cred = ref("Credential loading.");
+    let credential = ref("Credential loading.");
     let contentType = ref();
     let error = ref();
 

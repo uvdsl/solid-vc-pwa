@@ -8,7 +8,7 @@
     <div class="selectOptions">
       <div v-for="c in contentCred" :key="c" style="padding: 5px">
         <Checkbox :name="c" v-model="selectiveCred" :value="c" />
-        <label style="padding-left: 10px">{{ c }}</label>
+        <label style="padding-left: 10px">{{ `${c[0]} : ${c[1]}` }}</label>
       </div>
 
       <Divider />
