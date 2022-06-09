@@ -1,5 +1,5 @@
 <template>
-  <transition-group name="list" tag="md-list">
+  <transition-group v-if="creds.length > 0" name="list" tag="md-list">
     <Credential
       :uri="cred"
       :updateFlag="updateFlag"
@@ -10,6 +10,9 @@
       :selectFlag="cred === selectedCred"
     />
   </transition-group>
+  <div v-else>
+    No credentials in the wallet.
+  </div>
 </template>
 
 <script lang="ts">

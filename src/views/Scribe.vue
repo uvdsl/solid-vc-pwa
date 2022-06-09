@@ -39,6 +39,7 @@
     @hide="displayDisclosureDialog = false"
     :display="displayDisclosureDialog"
     :cred="selectedCredential"
+    :accessingURI="uri"
   />
 </template>
 

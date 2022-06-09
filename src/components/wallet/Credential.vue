@@ -17,14 +17,9 @@
       </div>
       <div class="flex justify-content-between mt-2">
         <Button
-          v-if="!uri.includes('wallet')"
-          icon="pi  pi-save"
-          class="p-button-outlined p-button-rounded p-button-raised"
-          @click="
-            save(credential, authFetch).then(() =>
-              deleteResource(uri, authFetch)
-            )
-          "
+          icon="pi pi-trash"
+          class="p-button-text p-button-rounded p-button-raised p-button-danger"
+          @click="deleteResource(uri, authFetch)"
         />
         <Button
           v-if="displayShort"
@@ -38,12 +33,6 @@
           class="p-button-text p-button-rounded p-button-raised p-button-info"
           @click="displayShort = true"
         />
-
-        <!-- <Button
-          icon="pi pi-trash"
-          class="p-button-text p-button-rounded p-button-raised p-button-danger"
-          @click="deleteResource(uri, authFetch)"
-        /> -->
       </div>
     </template>
   </Card>
@@ -94,15 +83,6 @@ export default defineComponent({
       )
       .catch((err) => (error.value = err));
 
-    const save = async (
-      content: string,
-      fetch?: (url: RequestInfo, init?: RequestInit) => Promise<Response>
-    ) => {
-      return postResource(wallet.value, content, fetch, {
-        "Content-type": contentType.value,
-      });
-    };
-
     const isSelected = ref(false);
     watch(
       () => props.selectFlag,
@@ -110,7 +90,7 @@ export default defineComponent({
     );
     const select = () => {
       isSelected.value = !isSelected.value;
-      context.emit("selectedCredential", credential.value);// props.uri);
+      context.emit("selectedCredential", credential.value); // props.uri);
     };
 
     return {
@@ -119,7 +99,6 @@ export default defineComponent({
       authFetch,
       deleteResource,
       error,
-      save,
       isSelected,
       select,
       displayShort,

@@ -44,7 +44,7 @@ export default defineComponent({
         command: async () => {
           createResource(
             "https://uvdsl.solid.aifb.kit.edu/inbox/",
-            `@prefix as: <https://www.w3.org/ns/activitystreams#> .\n\n<> a as:Announce;\n    as:actor <${webId?.value}> .`,
+            `@prefix schema: <http://schema.org/> .\n\n<> a schema:AskAction;\n    schema:agent <${webId?.value}>;\n    schema:recipient <https://uvdsl.solid.aifb.kit.edu/profile/card#me>; ;\n    schema:about "The demo resource ... tbi." .`,
             authFetch.value
           )
             .then(() =>

@@ -1,18 +1,13 @@
 <template>
   <transition-group name="list" tag="md-list">
-    <!--  <LDN
+    <LDN
       :uri="ldn"
       :updateFlag="updateFlag"
       v-for="ldn in ldns"
       :key="ldn"
       class="list-item"
-   />  -->
-    <Credential
-      :uri="ldn"
-      :updateFlag="updateFlag"
-      v-for="ldn in ldns"
-      :key="ldn"
-      class="list-item"
+      @selected="select"
+      :selectFlag="ldn === selectedLDN"
     />
   </transition-group>
 </template>
@@ -20,15 +15,13 @@
 <script lang="ts">
 import { defineComponent, ref, watch } from "vue";
 
-// import LDN from "@/components/inbox/LDN.vue";
-import Credential from "@/components/wallet/Credential.vue";
+import LDN from "@/components/inbox/LDN.vue";
 import { useSolidInbox } from "@/composables/useSolidInbox";
 
 export default defineComponent({
   name: "LDNs",
   components: {
-    // LDN,
-    Credential,
+    LDN,
   },
   setup(props) {
     const { ldns } = useSolidInbox();
@@ -39,8 +32,15 @@ export default defineComponent({
       () => (updateFlag.value = !updateFlag.value)
     );
 
+    const selectedLDN = ref();
+    const select = (ldn: string) => {
+      selectedLDN.value = ldn;
+    };
+
     return {
       ldns,
+      select,
+      selectedLDN,
       updateFlag,
     };
   },
