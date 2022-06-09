@@ -89,6 +89,7 @@ export default defineComponent({
       () => (isSelected.value = props.selectFlag)
     );
     const select = () => {
+      if (cred.value === "Credential loading.") return;
       isSelected.value = !isSelected.value;
       context.emit("selectedCredential", credential.value); // props.uri);
     };
