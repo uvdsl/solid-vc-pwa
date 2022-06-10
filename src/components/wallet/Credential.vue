@@ -65,9 +65,7 @@ export default defineComponent({
 
     const cache = useCache();
 
-    credential.value = cache[props.uri];
-
-    if (credential.value === undefined) {
+    if (cache[props.uri] === undefined) {
       getResource(props.uri, authFetch.value)
         .then((resp) =>
           resp.text().then((txt) => {
@@ -90,7 +88,8 @@ export default defineComponent({
         )
         .catch((err) => (error.value = err));
     } else {
-      cred.value = JSON.parse(credential.value)["credentialSubject"];
+      credential.value = JSON.parse(cache[props.uri]);
+      cred.value = JSON.parse(cache[props.uri])["credentialSubject"];
     }
 
     const isSelected = ref(false);
