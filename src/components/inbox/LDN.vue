@@ -21,7 +21,7 @@
           icon="pi  pi-save"
           class="p-button-outlined p-button-rounded p-button-raised"
           @click="
-            save(ldnotification, authFetch).then(() =>
+            save(JSON.stringify(ldnotification), authFetch).then(() =>
               deleteResource(uri, authFetch)
             )
           "
