@@ -34,7 +34,7 @@
 <script lang="ts">
 import { defineComponent, ref, toRefs, watch } from "vue";
 import { useToast } from "primevue/usetoast";
-import { deriveBBS } from "@/lib/bbs";
+import { deriveBBS, verifyBBS } from "@/lib/bbs";
 import { useSolidSession } from "@/composables/useSolidSession";
 import { createResource, postResource } from "@/lib/solidRequests";
 export default defineComponent({
@@ -93,6 +93,7 @@ export default defineComponent({
       const deriveProofFrame: Record<string, any> = {};
       deriveProofFrame["@context"] = props.cred["@context"];
       deriveProofFrame["type"] = props.cred["type"];
+      deriveProofFrame["id"] = props.cred["id"]
       deriveProofFrame["credentialSubject"] = credentialSubject;
       selectiveCred.value.forEach((e) => {
         const exists = credentialSubject[e[0]];
@@ -107,25 +108,30 @@ export default defineComponent({
         // exists and is array => push
         credentialSubject[e[0]].push(e[1]);
       });
-
-      const derivedCredential = await deriveBBS(
-        props.cred,
-        deriveProofFrame
-      )
-      // .then(() =>  toast.add({
-      //       severity: "info",
-      //       summary: "Derived Proof!",
-      //       detail: `Created Privacy-friendly Credential ...`,
-      //       life: 5000,
-      //     }))
-      .catch((err) =>
-        toast.add({
-          severity: "error",
-          summary: "Error on Deriving Proof!",
-          detail: err,
-          life: 5000,
-        })
-      );
+      credentialSubject["@explicit"] = true;
+      const derivedCredential = await deriveBBS(props.cred, deriveProofFrame)
+        // .then(() =>  toast.add({
+        //       severity: "info",
+        //       summary: "Derived Proof!",
+        //       detail: `Created Privacy-friendly Credential ...`,
+        //       life: 5000,
+        //     }))
+        .catch((err) => {
+          console.log(err);
+          toast.add({
+            severity: "error",
+            summary: "Error on Deriving Proof!",
+            detail: err,
+            life: 5000,
+          });
+        });
+      if (!derivedCredential) {
+        emitHide();
+        isLoading.value = false;
+        return;
+      }
+      verifyBBS(props.cred)
+      verifyBBS(derivedCredential, true)
       const recipient = new URL(props.accessingURI);
       recipient.pathname = "/profile/card";
       recipient.hash = "me";
@@ -169,6 +175,7 @@ export default defineComponent({
     };
 
     const emitHide = () => {
+      selectiveCred.value = [];
       return context.emit("hide");
     };
     return {

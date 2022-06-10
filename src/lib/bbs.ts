@@ -85,10 +85,10 @@ export const signBBS = async (input: Object, keyPair: Bls12381G2KeyPair) => {
  * @param input 
  * @returns 
  */
-export const verifyBBS = async (input: Object) => {
+export const verifyBBS = async (input: Object, isDerivedProof?: boolean) => {
     //Verify the (derived) proof
     const verified = await verify(input, {
-        suite: new BbsBlsSignature2020(),
+        suite: isDerivedProof ? new BbsBlsSignatureProof2020() : new BbsBlsSignature2020(),
         purpose: new purposes.AssertionProofPurpose(),
         documentLoader
     });
