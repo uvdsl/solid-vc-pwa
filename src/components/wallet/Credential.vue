@@ -19,7 +19,7 @@
         <Button
           icon="pi pi-trash"
           class="p-button-text p-button-rounded p-button-raised p-button-danger"
-          @click="deleteResource(uri, authFetch)"
+          @click="deleteRes(uri, authFetch)"
         />
         <Button
           v-if="displayShort"
@@ -43,6 +43,7 @@ import { useSolidProfile } from "@/composables/useSolidProfile";
 import { useSolidSession } from "@/composables/useSolidSession";
 import { deleteResource, getResource, postResource } from "@/lib/solidRequests";
 import { defineComponent, ref, watch } from "vue";
+import { useCache } from "@/composables/useCache";
 export default defineComponent({
   name: "Credential",
   components: {},
@@ -62,26 +63,35 @@ export default defineComponent({
     let contentType = ref();
     let error = ref();
 
-    getResource(props.uri, authFetch.value)
-      .then((resp) =>
-        resp.text().then((txt) => {
-          contentType.value = resp.headers.get("Content-type");
-          switch (contentType.value) {
-            case "application/ld+json":
-              credential.value = JSON.parse(txt); //["credentialSubject"];
-              cred.value = JSON.parse(txt)["credentialSubject"];
-              break;
-            case "text/turtle":
-              credential.value = txt;
-              cred.value = txt;
-              break;
-            default:
-              credential.value = txt;
-              cred.value = txt;
-          }
-        })
-      )
-      .catch((err) => (error.value = err));
+    const cache = useCache();
+
+    credential.value = cache[props.uri];
+
+    if (credential.value === undefined) {
+      getResource(props.uri, authFetch.value)
+        .then((resp) =>
+          resp.text().then((txt) => {
+            contentType.value = resp.headers.get("Content-type");
+            switch (contentType.value) {
+              case "application/ld+json":
+                credential.value = JSON.parse(txt); //["credentialSubject"];
+                cred.value = JSON.parse(txt)["credentialSubject"];
+                break;
+              case "text/turtle":
+                credential.value = txt;
+                cred.value = txt;
+                break;
+              default:
+                credential.value = txt;
+                cred.value = txt;
+            }
+            cache[props.uri] = txt;
+          })
+        )
+        .catch((err) => (error.value = err));
+    } else {
+      cred.value = JSON.parse(credential.value)["credentialSubject"];
+    }
 
     const isSelected = ref(false);
     watch(
@@ -94,6 +104,11 @@ export default defineComponent({
       context.emit("selectedCredential", credential.value); // props.uri);
     };
 
+    const deleteRes = (uri: string, fetch: any) => {
+      deleteResource(uri, fetch);
+      delete cache[uri];
+    };
+
     return {
       cred,
       credential,
@@ -103,6 +118,7 @@ export default defineComponent({
       isSelected,
       select,
       displayShort,
+      deleteRes,
     };
   },
 });
