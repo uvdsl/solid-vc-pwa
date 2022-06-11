@@ -32,17 +32,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, toRefs, watch } from "vue";
+import { computed, defineComponent, ref, toRefs, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import { deriveBBS, verifyBBS } from "@/lib/bbs";
 import { useSolidSession } from "@/composables/useSolidSession";
-import { createResource, postResource } from "@/lib/solidRequests";
+import { postResource } from "@/lib/solidRequests";
+import { useCache } from "@/composables/useCache";
 export default defineComponent({
   name: "DisclosureDialog",
   components: {},
   props: {
     display: Boolean,
-    cred: { default: Object },
+    cred: { default: "" },
     accessingURI: { default: "" },
   },
   emits: ["hide"],
@@ -52,12 +53,20 @@ export default defineComponent({
     const { webId } = toRefs(sessionInfo);
     const isLoading = ref(false);
     const showDisclosureDialog = ref(false);
+
+    const cache = useCache();
+    const credential = computed(() => {
+      if (!cache[props.cred]) return undefined;
+      return JSON.parse(cache[props.cred]);
+    });
+
     const selectiveCred = ref(Array<any>());
     const contentCred = ref();
     watch(
-      () => props.cred,
+      () => credential.value,
       () => {
-        Object.entries(props.cred.credentialSubject)
+        selectiveCred.value = [];
+        Object.entries(credential.value.credentialSubject)
           .map((entry) => {
             if (!(typeof entry[1] === "string")) {
               return (entry[1] as Array<string>).map((item) => [
@@ -91,9 +100,9 @@ export default defineComponent({
       isLoading.value = true;
       const credentialSubject: Record<string, any> = {};
       const deriveProofFrame: Record<string, any> = {};
-      deriveProofFrame["@context"] = props.cred["@context"];
-      deriveProofFrame["type"] = props.cred["type"];
-      deriveProofFrame["id"] = props.cred["id"]
+      deriveProofFrame["@context"] = credential.value["@context"];
+      deriveProofFrame["type"] = credential.value["type"];
+      deriveProofFrame["id"] = credential.value["id"];
       deriveProofFrame["credentialSubject"] = credentialSubject;
       selectiveCred.value.forEach((e) => {
         const exists = credentialSubject[e[0]];
@@ -109,7 +118,10 @@ export default defineComponent({
         credentialSubject[e[0]].push(e[1]);
       });
       credentialSubject["@explicit"] = true;
-      const derivedCredential = await deriveBBS(props.cred, deriveProofFrame)
+      const derivedCredential = await deriveBBS(
+        credential.value,
+        deriveProofFrame
+      )
         // .then(() =>  toast.add({
         //       severity: "info",
         //       summary: "Derived Proof!",
@@ -130,8 +142,8 @@ export default defineComponent({
         isLoading.value = false;
         return;
       }
-      verifyBBS(props.cred)
-      verifyBBS(derivedCredential, true)
+      verifyBBS(credential.value);
+      verifyBBS(derivedCredential, true);
       const recipient = new URL(props.accessingURI);
       recipient.pathname = "/profile/card";
       recipient.hash = "me";
@@ -175,7 +187,6 @@ export default defineComponent({
     };
 
     const emitHide = () => {
-      selectiveCred.value = [];
       return context.emit("hide");
     };
     return {

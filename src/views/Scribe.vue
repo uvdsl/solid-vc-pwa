@@ -48,13 +48,8 @@ import { useToast } from "primevue/usetoast";
 import { useSolidSession } from "@/composables/useSolidSession";
 import {
   getResource,
-  parseToN3,
-  putResource,
-  deleteResource,
-  createResource,
 } from "@/lib/solidRequests";
 import { computed, defineComponent, ref, watch } from "vue";
-import { useSolidProfile } from "@/composables/useSolidProfile";
 import CredDialog from "@/components/wallet/CredDialog.vue";
 import DisclosureDialog from "@/components/wallet/DisclosureDialog.vue";
 import router from "@/router";
@@ -261,8 +256,8 @@ export default defineComponent({
     const displayCredDialog = ref(false);
     const displayDisclosureDialog = ref(false);
 
-    const selectedCredential = ref();
-    const selectCred = (cred: Object) => {
+    const selectedCredential = ref("");
+    const selectCred = (cred: string) => {
       displayCredDialog.value = false;
       selectedCredential.value = cred;
       displayDisclosureDialog.value = true;

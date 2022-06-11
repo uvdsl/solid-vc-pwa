@@ -34,7 +34,7 @@ export default defineComponent({
     );
 
     const selectedCred = ref();
-    const selectCred = (cred: Object) => {
+    const selectCred = (cred: string) => {
       selectedCred.value = cred;
       context.emit("selectedCredential", selectedCred.value);
     };

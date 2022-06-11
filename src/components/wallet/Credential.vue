@@ -100,7 +100,7 @@ export default defineComponent({
     const select = () => {
       if (cred.value === "Credential loading.") return;
       isSelected.value = !isSelected.value;
-      context.emit("selectedCredential", credential.value); // props.uri);
+      context.emit("selectedCredential", props.uri); // credential.value); //
     };
 
     const deleteRes = (uri: string, fetch: any) => {
