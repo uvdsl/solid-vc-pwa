@@ -22,6 +22,7 @@
   <div class="grid">
     <div class="col lg:col-6 lg:col-offset-3">
       <SpeedDial
+        v-if="isLoggedIn"
         :model="speedDialActions"
         type="semi-circle"
         :radius="75"
@@ -46,10 +47,8 @@
 <script lang="ts">
 import { useToast } from "primevue/usetoast";
 import { useSolidSession } from "@/composables/useSolidSession";
-import {
-  getResource,
-} from "@/lib/solidRequests";
-import { computed, defineComponent, ref, watch } from "vue";
+import { getResource } from "@/lib/solidRequests";
+import { computed, defineComponent, ref, toRefs, watch } from "vue";
 import CredDialog from "@/components/wallet/CredDialog.vue";
 import DisclosureDialog from "@/components/wallet/DisclosureDialog.vue";
 import router from "@/router";
@@ -59,7 +58,8 @@ export default defineComponent({
   components: { CredDialog, DisclosureDialog },
   setup(props, context) {
     const toast = useToast();
-    const { authFetch } = useSolidSession();
+    const { authFetch, sessionInfo } = useSolidSession();
+    const { isLoggedIn } = toRefs(sessionInfo);
     const isLoading = ref(false);
 
     // uri of the information resource
@@ -273,6 +273,7 @@ export default defineComponent({
       selectCred,
       selectedCredential,
       displayDisclosureDialog,
+      isLoggedIn,
     };
   },
 });

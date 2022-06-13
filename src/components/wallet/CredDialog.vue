@@ -40,10 +40,20 @@ export default defineComponent({
     };
 
     const select = () => {
+      if (!selectedCredential.value) {
+        toast.add({
+            severity: "info",
+            summary: "Sorry?",
+            detail: "Please select a credential.",
+            life: 5000,
+          })
+        return
+      }
         context.emit("selectedCredential", selectedCredential.value);
     }
 
     const emitHide = () => {
+      selectedCredential.value = undefined
       return context.emit("hide");
     };
     return {
