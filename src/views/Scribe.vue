@@ -42,6 +42,11 @@
     :cred="selectedCredential"
     :accessingURI="uri"
   />
+  <KeyDialog
+    @hide="displayKeyDialog = false"
+    @selectedCryptoKey="dostuff"
+    :display="displayKeyDialog"
+  />
 </template>
 
 <script lang="ts">
@@ -51,11 +56,13 @@ import { getResource } from "@/lib/solidRequests";
 import { computed, defineComponent, ref, toRefs, watch } from "vue";
 import CredDialog from "@/components/wallet/CredDialog.vue";
 import DisclosureDialog from "@/components/wallet/DisclosureDialog.vue";
+import KeyDialog from "@/components/keys/KeyDialog.vue";
 import router from "@/router";
+import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
 
 export default defineComponent({
   name: "Scribe",
-  components: { CredDialog, DisclosureDialog },
+  components: { CredDialog, DisclosureDialog, KeyDialog },
   setup(props, context) {
     const toast = useToast();
     const { authFetch, sessionInfo } = useSolidSession();
@@ -251,6 +258,11 @@ export default defineComponent({
         icon: "pi pi-unlock",
         command: () => (displayCredDialog.value = true),
       },
+      {
+        label: "Play the keys, yo!.",
+        icon: "pi pi-key",
+        command: () => (displayKeyDialog.value = true),
+      },
     ];
 
     const displayCredDialog = ref(false);
@@ -261,6 +273,12 @@ export default defineComponent({
       displayCredDialog.value = false;
       selectedCredential.value = cred;
       displayDisclosureDialog.value = true;
+    };
+
+    const displayKeyDialog = ref(false);
+    const dostuff = (key: Bls12381G2KeyPair) => {
+      console.log(JSON.stringify(key));
+      displayKeyDialog.value = false;
     };
 
     return {
@@ -274,6 +292,8 @@ export default defineComponent({
       selectedCredential,
       displayDisclosureDialog,
       isLoggedIn,
+      displayKeyDialog,
+      dostuff
     };
   },
 });

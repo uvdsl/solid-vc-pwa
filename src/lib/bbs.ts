@@ -6,13 +6,44 @@ import {
     BbsBlsSignatureProof2020,
     deriveProof
 } from "@mattrglobal/jsonld-signatures-bbs";
+import { generateBls12381G2KeyPair } from "@mattrglobal/bbs-signatures";
+import { encode } from 'bs58';
 // @ts-ignore
 import { extendContextLoader, sign, verify, purposes } from "jsonld-signatures";
 import { getResource } from "./solidRequests";
 
 
 
-const documents: Record<string, Object> = {
+export interface KeyObject {
+    "@context": string | Record<string, string> | Array<string | Record<string, string>>;
+    id: string;
+    label?: string;
+    controller?: string;
+    privateKeyBase58?: string;
+    publicKey?: string;
+    publicKeyBase58?: string;
+    assertionMethod?: string | Array<string>
+}
+
+export const generateKeyPair = async (id?: string, controller?: string): Promise<Bls12381G2KeyPair> => {
+    //Generate a new key pair
+    const keyPair = await generateBls12381G2KeyPair();
+    const encodedPublic = encode(keyPair.publicKey);
+    const encodedSecret = encode(keyPair.secretKey);
+    console.log(`### BBS+\t| Public key base58 = ${encodedPublic}`)
+    // console.log(`### BBS+\t| Secret key base58 = ${encodedSecret}`)
+    console.log("Key pair generated");
+    return new Bls12381G2KeyPair({
+        id,
+        controller,
+        privateKeyBase58: encodedSecret,
+        publicKeyBase58: encodedPublic
+    });
+};
+
+
+
+const documents: Record<string, KeyObject> = {
     "https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key": {
         "@context": "https://w3id.org/security/v2",
         "id": "https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key",
@@ -103,3 +134,4 @@ export const deriveBBS = async (signed: Object, reveal: Object) => {
     console.log("### BBS+\t| Derived:", JSON.stringify(derived, null, 2));
     return derived
 }
+

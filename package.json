@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "@inrupt/solid-client-authn-browser": "^1.11.3",
+    "@mattrglobal/bbs-signatures": "^1.0.0",
     "@mattrglobal/jsonld-signatures-bbs": "^0.10.0",
+    "bs58": "^5.0.0",
     "core-js": "^3.6.5",
     "jsonld-signatures": "^5.0.1",
     "n3": "^1.13.0",
