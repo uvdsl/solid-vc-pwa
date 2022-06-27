@@ -14,6 +14,7 @@ import { getResource } from "./solidRequests";
 
 const documents: Record<string, Object> = {
     "https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key": {
+        "@context": "https://w3id.org/security/v2",
         "id": "https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key",
         "controller": "https://uvdsl.solid.aifb.kit.edu/profile/card#me",
         "publicKeyBase58": "taJDHbrZYEbQdHzFuD3VYKeyRCoP4AXU9hZx6AHsaThcPyASdVTxjqaVzHdR5XNVPoxwXGyjwSHHHkwwJe5bgZh6iAcv1WG2CYSAaM3BDZkhMDu8wQfxSHQNJnJDGVunPvV"
@@ -24,17 +25,6 @@ const documents: Record<string, Object> = {
         "id": "https://uvdsl.solid.aifb.kit.edu/profile/card#me",
         "assertionMethod": ["https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key"]
     },
-    "did:web:https://issuer13.solidcommunity.net/#test": {
-        "id": "did:web:https://issuer13.solidcommunity.net/#test",
-        "controller": "did:web:https://issuer13.solidcommunity.net/",
-        "publicKeyBase58": "taJDHbrZYEbQdHzFuD3VYKeyRCoP4AXU9hZx6AHsaThcPyASdVTxjqaVzHdR5XNVPoxwXGyjwSHHHkwwJe5bgZh6iAcv1WG2CYSAaM3BDZkhMDu8wQfxSHQNJnJDGVunPvV"
-    }
-    ,
-    "did:web:https://issuer13.solidcommunity.net/": {
-        "@context": "https://w3id.org/security/v2",
-        "id": "did:web:https://issuer13.solidcommunity.net/",
-        "assertionMethod": ["did:web:https://issuer13.solidcommunity.net/#test"]
-    }
 };
 
 const customDocLoader = async (url: string) => {
@@ -45,9 +35,11 @@ const customDocLoader = async (url: string) => {
             throw new Error(`### BBS+\t| Cannot resolve non-HTTP URIs.\n${url}`)
         }
         // load remote
-        console.log("### BBS+\t| Loading remote resource ...")
+        console.log(`### BBS+\t| Loading remote resource ...\n${url}`)
         documents[url] = await getResource(url).then(resp => resp.text()).then(JSON.parse)
         context = documents[url];
+    } else {
+        console.log(`### BBS+\t| From cache ...\n${url}`)
     }
     return {
         contextUrl: null, // this is for a context via a link header
