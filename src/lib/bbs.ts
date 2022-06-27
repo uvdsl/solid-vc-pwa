@@ -10,7 +10,9 @@ import { generateBls12381G2KeyPair } from "@mattrglobal/bbs-signatures";
 import { encode } from 'bs58';
 // @ts-ignore
 import { extendContextLoader, sign, verify, purposes } from "jsonld-signatures";
-import { getResource } from "./solidRequests";
+import { getResource, parseToN3 } from "./solidRequests";
+import { ref, Ref, watch } from "vue";
+import { SEC } from "./namespaces";
 
 
 
@@ -43,7 +45,7 @@ export const generateKeyPair = async (id?: string, controller?: string): Promise
 
 
 
-const documents: Record<string, KeyObject> = {
+const documents: Ref<Record<string, KeyObject>> = ref({
     "https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key": {
         "@context": "https://w3id.org/security/v2",
         "id": "https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key",
@@ -56,19 +58,47 @@ const documents: Record<string, KeyObject> = {
         "id": "https://uvdsl.solid.aifb.kit.edu/profile/card#me",
         "assertionMethod": ["https://uvdsl.solid.aifb.kit.edu/public/keys/pidkg#key"]
     },
-};
+});
+
+export const addToDocuments = (keys: KeyObject) => {
+    documents.value[keys.id] = keys;
+    documents.value[keys.controller as string] = {
+        "@context": "https://w3id.org/security/v2",
+        "id": keys.controller as string,
+        "assertionMethod": [keys.id]
+    };
+}
 
 const customDocLoader = async (url: string) => {
+    const wellKnownContexts = [   
+    "https://www.w3.org/2018/credentials/v1",
+    "https://w3id.org/citizenship/v1",
+    "https://w3id.org/security/bbs/v1"]
     // check cache
-    let context = documents[url];
-    if (!context) {
+    let context = documents.value[url];
+    if (!context || !wellKnownContexts.includes(url)) {
         if (!url.startsWith("http")) {
             throw new Error(`### BBS+\t| Cannot resolve non-HTTP URIs.\n${url}`)
         }
         // load remote
         console.log(`### BBS+\t| Loading remote resource ...\n${url}`)
-        documents[url] = await getResource(url).then(resp => resp.text()).then(JSON.parse)
-        context = documents[url];
+        const resp = await getResource(url)
+        const txt = await resp.text()
+        const ct = resp.headers.get("Content-Type")
+        let doc = undefined
+        if(ct === "text/turtle") {
+            const {store} = await parseToN3(txt, url)
+            const keys = store.getObjects(url,SEC("assertionMethod"),null).map(o => o.value)
+            doc = {
+            "@context": "https://w3id.org/security/v2",
+            "id": url,
+            "assertionMethod": keys
+        }
+        } else {
+            doc = JSON.parse(txt)
+        }
+        documents.value[url] = doc
+        context = documents.value[url];
     } else {
         console.log(`### BBS+\t| From cache ...\n${url}`)
     }

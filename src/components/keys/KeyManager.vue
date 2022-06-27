@@ -23,16 +23,23 @@
 
 <script lang="ts">
 import { useSolidSession } from "@/composables/useSolidSession";
-import { LDP } from "@/lib/namespaces";
+import { LDP, SEC } from "@/lib/namespaces";
 import {
   createContainer,
   getLocationHeader,
   getResource,
   parseToN3,
+  patchResource,
   postResource,
   putResource,
 } from "@/lib/solidRequests";
-import { generateKeyPair, KeyObject, signBBS } from "@/lib/bbs";
+import {
+  addToDocuments,
+  generateKeyPair,
+  KeyObject,
+  signBBS,
+  verifyBBS,
+} from "@/lib/bbs";
 import { useToast } from "primevue/usetoast";
 import { computed, defineComponent, ref, Ref, toRefs, watch } from "vue";
 import { encode } from "bs58";
@@ -249,35 +256,58 @@ export default defineComponent({
       }
       isLoading.value = true;
       // generate new keypair
-      let keyPair = await generateKeyPair();
+      let keyPair = await generateKeyPair(undefined, webId?.value);
 
       // store the keys in solid pod
       const publicKeyFolder = `${baseURI.value}/public/keys/`;
       const publicKey = {
-        "@context": [ "https://w3id.org/security/v2", {"label":"http://www.w3.org/2000/01/rdf-schema#label"}],
+        "@context": [
+          "https://w3id.org/security/v2",
+          { label: "http://www.w3.org/2000/01/rdf-schema#label" },
+        ],
         id: "#key",
         label: keyName.value,
         controller: webId?.value,
-        publicKeyBase58: encode(keyPair.publicKeyBuffer)
+        publicKeyBase58: encode(keyPair.publicKeyBuffer),
       };
-      const publicKeySigned = await signBBS(publicKey, keyPair);
+
       const pubKeyCREATE = postResource(
         publicKeyFolder,
+        JSON.stringify(publicKey),
+        authFetch.value,
+        { "Content-type": "application/ld+json" }
+      );
+      let pubKeyLocation = await pubKeyCREATE.then(getLocationHeader);
+
+      //@ts-ignore
+      keyPair.id = pubKeyLocation + "#key";
+      publicKey.id = pubKeyLocation + "#key";
+      const patch = `@prefix solid: <http://www.w3.org/ns/solid/terms#>. _:rename a solid:InsertDeletePatch; solid:inserts { <${webId?.value}> <${SEC("assertionMethod")}> <${keyPair.id}>. }.`
+      await patchResource(webId?.value as string, patch, authFetch.value)
+
+    //   addToDocuments(publicKey);
+
+      // console.log(keyPair)
+      const publicKeySigned = await signBBS(publicKey, keyPair);
+      verifyBBS(publicKeySigned);
+      const pubKeySignedCREATE = putResource(
+        pubKeyLocation,
         JSON.stringify(publicKeySigned),
         authFetch.value,
         { "Content-type": "application/ld+json" }
       );
 
-      let pubKeyLocation = await pubKeyCREATE.then(getLocationHeader);
-
       const privateKeyFolder = `${baseURI.value}/private/keys/`;
       const privateKey = {
-        "@context":  [ "https://w3id.org/security/v2", {"label":"http://www.w3.org/2000/01/rdf-schema#label"}],
+        "@context": [
+          "https://w3id.org/security/v2",
+          { label: "http://www.w3.org/2000/01/rdf-schema#label" },
+        ],
         id: "#key",
         label: keyName.value,
         controller: webId?.value,
         privateKeyBase58: encode(keyPair.privateKeyBuffer as Uint8Array),
-        publicKey: pubKeyLocation,
+        publicKey: publicKeySigned,
       };
       const privKeyCREATE = postResource(
         privateKeyFolder,
@@ -287,7 +317,7 @@ export default defineComponent({
       );
 
       // finshing moves, get the updated list of private keys.
-      Promise.all([pubKeyCREATE, privKeyCREATE])
+      Promise.all([pubKeyCREATE, pubKeySignedCREATE, privKeyCREATE])
         .then(() => getContainerItems(privateKeyFolder, authFetch.value))
         .then((keys) => (privateKeys.value = keys))
         .then(() =>

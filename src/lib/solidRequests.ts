@@ -224,16 +224,42 @@ export async function getContainerItems(uri: string, fetch?: (url: RequestInfo, 
 export async function putResource(
   uri: string,
   body: string,
-  fetch?: (url: RequestInfo, init?: RequestInit) => Promise<Response>
+  fetch?: (url: RequestInfo, init?: RequestInit) => Promise<Response>,
+  headers?: Record<string, string>
 ): Promise<Response> {
   console.log("### SoLiD\t| PUT\n" + uri);
   if (fetch === undefined) fetch = window.fetch;
+  if (!headers) headers = {};
+  headers["Content-type"] = headers["Content-type"]
+    ? headers["Content-type"]
+    : "text/turtle";
+  headers["Link"] = '<http://www.w3.org/ns/ldp#Resource>; rel="type"';
   return fetch(uri, {
     method: "PUT",
-    headers: {
-      "Content-type": "text/turtle",
-      Link: '<http://www.w3.org/ns/ldp#Resource>; rel="type"',
-    },
+    headers: headers,
+    body: body,
+  }).then(_checkResponseStatus);
+}
+
+
+/**
+ * Send a fetch request: PATCH, uri, async providing `text/n3`
+ *
+ * @param uri: the URI of the text/n3 to be patch
+ * @param body: the text/turtle to provide
+ * @param fetch: OPTIONAL - fetch function to use, e.g. session.fetch of a solid session
+ * @return Promise string  of the created URI from the response `Location` header
+ */
+export async function patchResource(
+  uri: string,
+  body: string,
+  fetch?: (url: RequestInfo, init?: RequestInit) => Promise<Response>,
+): Promise<Response> {
+  console.log("### SoLiD\t| PATCH\n" + uri);
+  if (fetch === undefined) fetch = window.fetch;
+  return fetch(uri, {
+    method: "PATCH",
+    headers: {"Content-Type":"text/n3"},
     body: body,
   }).then(_checkResponseStatus);
 }
