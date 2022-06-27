@@ -41,24 +41,26 @@
     :display="displayDisclosureDialog"
     :cred="selectedCredential"
     :accessingURI="uri"
+    @discloseCredential="saveDerived"
   />
   <KeyDialog
     @hide="displayKeyDialog = false"
-    @selectedCryptoKey="dostuff"
     :display="displayKeyDialog"
+    @selectedCryptoKey="signCred"
   />
 </template>
 
 <script lang="ts">
 import { useToast } from "primevue/usetoast";
 import { useSolidSession } from "@/composables/useSolidSession";
-import { getResource } from "@/lib/solidRequests";
+import { getResource, postResource } from "@/lib/solidRequests";
 import { computed, defineComponent, ref, toRefs, watch } from "vue";
 import CredDialog from "@/components/wallet/CredDialog.vue";
 import DisclosureDialog from "@/components/wallet/DisclosureDialog.vue";
 import KeyDialog from "@/components/keys/KeyDialog.vue";
 import router from "@/router";
 import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
+import { signBBS, verifyBBS } from "@/lib/bbs";
 
 export default defineComponent({
   name: "Scribe",
@@ -66,7 +68,7 @@ export default defineComponent({
   setup(props, context) {
     const toast = useToast();
     const { authFetch, sessionInfo } = useSolidSession();
-    const { isLoggedIn } = toRefs(sessionInfo);
+    const { isLoggedIn, webId } = toRefs(sessionInfo);
     const isLoading = ref(false);
 
     // uri of the information resource
@@ -83,7 +85,7 @@ export default defineComponent({
     // content of the information resource
     const content = ref("");
     content.value =
-      "This is a demo resource, which you only have access to after you 'unlock' it with a Verifiable Credential issued by the creator of this demo: Christoph Braun aka. uvdsl :)\n\nClick `GET` to access the resource.\n\n    If you get a 401, log in\n                               (button at the top right).\n\n    If you get a 403, unlock the resource\n                               (button at the bottom).";
+      "This is a demo resource, which you only have access to after you 'unlock' it with a Verifiable Credential issued by the creator of this demo: Alice aka. Christoph aka. uvdsl :)\n\nClick `GET` to access the resource.\n\n    If you get a 401, log in\n                               (button at the top right).\n\n    If you get a 403, unlock the resource\n                               (button at the bottom).";
     // watch(
     //   () => inbox.value,
     //   () => (content.value = inbox.value !== "" ? "<#this> a <#demo>." : ""),
@@ -258,15 +260,16 @@ export default defineComponent({
         icon: "pi pi-unlock",
         command: () => (displayCredDialog.value = true),
       },
-      {
-        label: "Play the keys, yo!.",
-        icon: "pi pi-key",
-        command: () => (displayKeyDialog.value = true),
-      },
+      // {
+      //   label: "Play the keys, yo!.",
+      //   icon: "pi pi-key",
+      //   command: () => (displayKeyDialog.value = true),
+      // },
     ];
 
     const displayCredDialog = ref(false);
     const displayDisclosureDialog = ref(false);
+    const displayKeyDialog = ref(false);
 
     const selectedCredential = ref("");
     const selectCred = (cred: string) => {
@@ -275,11 +278,65 @@ export default defineComponent({
       displayDisclosureDialog.value = true;
     };
 
-    const displayKeyDialog = ref(false);
-    const dostuff = (key: Bls12381G2KeyPair) => {
-      console.log(JSON.stringify(key));
-      displayKeyDialog.value = false;
+    const derivedCred = ref();
+    const saveDerived = (derCred: Object) => {
+      derivedCred.value = derCred;
+      displayDisclosureDialog.value = false;
+      displayKeyDialog.value = true;
     };
+
+    const signCred = async (key: Bls12381G2KeyPair) => {
+      const signedCred = await signBBS(derivedCred.value, key);
+      verifyBBS(signedCred);
+      verifyBBS(signedCred, true);
+      displayKeyDialog.value = false;
+      send(signedCred)
+    };
+
+    const send = async (cred: Object) => {
+
+      isLoading.value = true;
+
+      const recipient = new URL(uri.value);
+      recipient.pathname = "/profile/card";
+      recipient.hash = "me";
+      const request = {
+        type: "schema:AskAction",
+        "schema:agent": webId?.value,
+        "cred:vc": cred,
+        "schema:recipient": recipient.href,
+        "schema:about": {
+          type: "acl:Authorization",
+          "acl:agent": webId?.value,
+          "acl:accessTo": uri.value,
+          "acl:mode": "acl:Read",
+        },
+      };
+      const r_inbox = new URL(uri.value);
+      r_inbox.pathname = "/inbox/";
+      postResource(r_inbox.href, JSON.stringify(request), undefined, {
+        "Content-type": "application/ld+json",
+      })
+        .then(() =>
+          toast.add({
+            severity: "success",
+            summary: "Successful Request!",
+            detail: `Charlie received your access request.`,
+            life: 5000,
+          })
+        )
+        .catch((err) =>
+          toast.add({
+            severity: "error",
+            summary: "Error on request!",
+            detail: err,
+            life: 5000,
+          })
+        )
+        .finally(() => {
+          isLoading.value = false;
+        });
+    }
 
     return {
       uri,
@@ -291,9 +348,10 @@ export default defineComponent({
       selectCred,
       selectedCredential,
       displayDisclosureDialog,
+      saveDerived,
       isLoggedIn,
       displayKeyDialog,
-      dostuff
+      signCred,
     };
   },
 });

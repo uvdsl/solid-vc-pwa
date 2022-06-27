@@ -51,7 +51,7 @@ export default defineComponent({
               toast.add({
                 severity: "success",
                 summary: "Successful Request!",
-                detail: "Christoph received your credential request.",
+                detail: "Christoph (aka. Alice) received your credential request.",
                 life: 5000,
               })
             )

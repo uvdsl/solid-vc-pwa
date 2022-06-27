@@ -51,9 +51,9 @@ export default defineComponent({
         });
         return;
       }
-      const pubKey = await getResource(selectedKey.publicKey as string).then(resp => resp.text()).then(JSON.parse) as KeyObject
+      const pubKey = await getResource((selectedKey.publicKey as any)["id"] as string).then(resp => resp.text()).then(JSON.parse) as KeyObject
       const key = new Bls12381G2KeyPair({
-        id: selectedKey.publicKey,
+        id: (selectedKey.publicKey as any)["id"],
         controller: selectedKey.controller,
         privateKeyBase58: selectedKey.privateKeyBase58 as string,
         publicKeyBase58: pubKey.publicKeyBase58 as string

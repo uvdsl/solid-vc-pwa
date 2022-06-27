@@ -46,11 +46,9 @@ export default defineComponent({
     cred: { default: "" },
     accessingURI: { default: "" },
   },
-  emits: ["hide"],
+  emits: ["hide", "discloseCredential"],
   setup(props, context) {
     const toast = useToast();
-    const { sessionInfo } = useSolidSession();
-    const { webId } = toRefs(sessionInfo);
     const isLoading = ref(false);
     const showDisclosureDialog = ref(false);
 
@@ -95,7 +93,6 @@ export default defineComponent({
       }
     );
 
-    const disclosableCredential = ref("");
     const submit = async () => {
       isLoading.value = true;
       const credentialSubject: Record<string, any> = {};
@@ -142,48 +139,10 @@ export default defineComponent({
         isLoading.value = false;
         return;
       }
-      verifyBBS(credential.value);
-      verifyBBS(derivedCredential, true);
-      const recipient = new URL(props.accessingURI);
-      recipient.pathname = "/profile/card";
-      recipient.hash = "me";
-      const request = {
-        type: "schema:AskAction",
-        "schema:agent": webId?.value,
-        "cred:vc": derivedCredential,
-        "schema:recipient": recipient.href,
-        "schema:about": {
-          type: "acl:Authorization",
-          "acl:agent": webId?.value,
-          "acl:accessTo": props.accessingURI,
-          "acl:mode": "acl:Read",
-        },
-      };
-      const r_inbox = new URL(props.accessingURI);
-      r_inbox.pathname = "/inbox/";
-      postResource(r_inbox.href, JSON.stringify(request), undefined, {
-        "Content-type": "application/ld+json",
-      })
-        .then(() =>
-          toast.add({
-            severity: "success",
-            summary: "Successful Request!",
-            detail: `${recipient.href}\nreceived your access request.`,
-            life: 5000,
-          })
-        )
-        .catch((err) =>
-          toast.add({
-            severity: "error",
-            summary: "Error on request!",
-            detail: err,
-            life: 5000,
-          })
-        )
-        .finally(() => {
-          emitHide();
-          isLoading.value = false;
-        });
+      // verifyBBS(credential.value);
+      // verifyBBS(derivedCredential, true);
+      isLoading.value = false;
+      context.emit("discloseCredential", derivedCredential)
     };
 
     const emitHide = () => {
