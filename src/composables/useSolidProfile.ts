@@ -3,8 +3,9 @@ import { computed, ref } from "vue";
 const name = ref("");
 const img = ref("");
 const inbox = ref("");
-const wallet = computed(() => inbox.value.split("/inbox/")[0] + "/wallet/");
+const storage = ref("")
+const wallet = computed(() => `${storage.value}wallet/`);
 
 export const useSolidProfile = () => {
-  return { name, img, inbox, wallet };
+  return { name, img, inbox, storage, wallet };
 };

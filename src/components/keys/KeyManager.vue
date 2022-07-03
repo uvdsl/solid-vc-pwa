@@ -43,6 +43,7 @@ import {
 import { useToast } from "primevue/usetoast";
 import { computed, defineComponent, ref, Ref, toRefs, watch } from "vue";
 import { encode } from "bs58";
+import { useSolidProfile } from "@/composables/useSolidProfile";
 
 export default defineComponent({
   name: "KeyManager",
@@ -53,9 +54,7 @@ export default defineComponent({
     const { authFetch, sessionInfo } = useSolidSession();
     const { webId } = toRefs(sessionInfo);
     const isLoading = ref(false);
-    const baseURI = computed(() => {
-      return webId?.value ? webId.value.split("/profile")[0] : undefined;
-    });
+    const { storage } = useSolidProfile();
 
     /**
      * ACL for public resource!
@@ -124,7 +123,7 @@ export default defineComponent({
           life: 7500,
         });
         return createContainer(
-          `${baseURI.value}/public/`,
+          `${storage.value}/public/`,
           "keys",
           authFetch.value
         ).catch((err) => {
@@ -138,17 +137,17 @@ export default defineComponent({
             detail: "Creating it now.",
             life: 10000,
           });
-          return createContainer(`${baseURI.value}/`, "public", authFetch.value)
+          return createContainer(`${storage.value}/`, "public", authFetch.value)
             .then(() =>
               createContainer(
-                `${baseURI.value}/public/`,
+                `${storage.value}/public/`,
                 "keys",
                 authFetch.value
               )
             )
             .then(() =>
               putResource(
-                `${baseURI.value}/public/keys/.acl`,
+                `${storage.value}/public/keys/.acl`,
                 publicACL,
                 authFetch.value
               ).catch((err) =>
@@ -184,7 +183,7 @@ export default defineComponent({
           detail: "Creating it now.",
           life: 7500,
         });
-        return createContainer(`${baseURI.value}/private/`, "keys", fetch)
+        return createContainer(`${storage.value}/private/`, "keys", fetch)
           .catch((err) => {
             // make sure public directories exist
             if (!err.message.includes("`404`")) {
@@ -197,11 +196,11 @@ export default defineComponent({
               life: 10000,
             });
             return createContainer(
-              `${baseURI.value}/`,
+              `${storage.value}/`,
               "private",
               authFetch.value
             ).then(() =>
-              createContainer(`${baseURI.value}/private/`, "keys", fetch)
+              createContainer(`${storage.value}/private/`, "keys", fetch)
             );
           })
           .then(getLocationHeader)
@@ -215,19 +214,19 @@ export default defineComponent({
     const keyName = ref("");
 
     watch(
-      () => baseURI.value,
+      () => storage.value,
       async () => {
         privateKeys.value = [];
         // publicKeys.value = [];
-        if (baseURI.value) {
+        if (storage.value) {
           isLoading.value = true;
-          const publicKeyFolder = `${baseURI.value}/public/keys/`;
+          const publicKeyFolder = `${storage.value}/public/keys/`;
           const pubFolderPromise = getPublicKeyFolder(
             publicKeyFolder,
             authFetch.value
           );
           //   .then((pubKeys) => (publicKeys.value = pubKeys));
-          const privateKeyFolder = `${baseURI.value}/private/keys/`;
+          const privateKeyFolder = `${storage.value}/private/keys/`;
           const privFolderPromise = getPrivateKeyFolder(
             privateKeyFolder,
             authFetch.value
@@ -259,7 +258,7 @@ export default defineComponent({
       let keyPair = await generateKeyPair(undefined, webId?.value);
 
       // store the keys in solid pod
-      const publicKeyFolder = `${baseURI.value}/public/keys/`;
+      const publicKeyFolder = `${storage.value}/public/keys/`;
       const publicKey = {
         "@context": [
           "https://w3id.org/security/v2",
@@ -297,7 +296,7 @@ export default defineComponent({
         { "Content-type": "application/ld+json" }
       );
 
-      const privateKeyFolder = `${baseURI.value}/private/keys/`;
+      const privateKeyFolder = `${storage.value}/private/keys/`;
       const privateKey = {
         "@context": [
           "https://w3id.org/security/v2",

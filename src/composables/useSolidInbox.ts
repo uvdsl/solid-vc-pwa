@@ -24,6 +24,7 @@ const update = async (uri: string) => {
 
 const sub = async (uri: string) => {
     if (socket !== undefined) socket.close();
+    if (uri == "") return
     const url = new URL(uri);
     url.protocol = "wss";
 

@@ -44,7 +44,7 @@ import LoginButton from "./buttons/LoginButton.vue";
 import LogoutButton from "./buttons/LogoutButton.vue";
 import { useSolidSession } from "../composables/useSolidSession";
 import { getResource, parseToN3 } from "../lib/solidRequests";
-import { LDP, VCARD } from "../lib/namespaces";
+import { LDP, VCARD, SPACE } from "../lib/namespaces";
 import { useServiceWorkerNotifications } from "@/composables/useServiceWorkerNotifications";
 import { useSolidWebPush } from "@/composables/useSolidWebPush";
 import { useSolidProfile } from "@/composables/useSolidProfile";
@@ -62,7 +62,7 @@ export default defineComponent({
     const { subscribeForResource, unsubscribeFromResource } = useSolidWebPush();
     const { sessionInfo, authFetch } = useSolidSession();
     const { isLoggedIn, webId } = toRefs(sessionInfo);
-    const { name, img, inbox } = useSolidProfile();
+    const { name, img, inbox, storage } = useSolidProfile();
     const { ldns } = useSolidInbox();
 
     const getPersonalData = async (webId: string) => {
@@ -75,7 +75,9 @@ export default defineComponent({
       const name = query.length > 0 ? query[0].value : "";
       query = parsedN3.store.getObjects(webId, LDP("inbox"), null);
       const inbox = query.length > 0 ? query[0].value : "";
-      return { name, img, inbox };
+      query = parsedN3.store.getObjects(webId, SPACE("storage"), null);
+      const storage = query.length > 0 ? query[0].value : "";
+      return { name, img, inbox, storage };
     };
 
     if (webId !== undefined)
@@ -84,12 +86,14 @@ export default defineComponent({
           img.value = "";
           name.value = "";
           inbox.value = "";
+          storage.value = "";
           return;
         }
         getPersonalData(webId.value).then((pd) => {
           img.value = pd.img;
           name.value = pd.name;
           inbox.value = pd.inbox;
+          storage.value = pd.storage
         });
       });
 
