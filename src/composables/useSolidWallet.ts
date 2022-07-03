@@ -24,7 +24,7 @@ const update = async (uri: string) => {
             if (err.message.includes("`404`")) {
                 console.log("Wallet not found, creating it now.")
                 return createContainer(
-                    `${wallet.value.split("/wallet/")[0]}`,
+                    `${wallet.value.split("wallet/")[0]}`,
                     "wallet",
                     authFetch.value
                 );
