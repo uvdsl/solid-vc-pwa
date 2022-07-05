@@ -39,12 +39,10 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref, toRefs, watch } from "vue";
+import { computed, defineComponent, ref, toRefs } from "vue";
 import LoginButton from "./buttons/LoginButton.vue";
 import LogoutButton from "./buttons/LogoutButton.vue";
 import { useSolidSession } from "../composables/useSolidSession";
-import { getResource, parseToN3 } from "../lib/solidRequests";
-import { LDP, VCARD, SPACE } from "../lib/namespaces";
 import { useServiceWorkerNotifications } from "@/composables/useServiceWorkerNotifications";
 import { useSolidWebPush } from "@/composables/useSolidWebPush";
 import { useSolidProfile } from "@/composables/useSolidProfile";
@@ -60,42 +58,10 @@ export default defineComponent({
     const { hasActivePush, askForNotificationPermission } =
       useServiceWorkerNotifications();
     const { subscribeForResource, unsubscribeFromResource } = useSolidWebPush();
-    const { sessionInfo, authFetch } = useSolidSession();
+    const { sessionInfo } = useSolidSession();
     const { isLoggedIn, webId } = toRefs(sessionInfo);
-    const { name, img, inbox, storage } = useSolidProfile();
+    const { name, img, inbox } = useSolidProfile();
     const { ldns } = useSolidInbox();
-
-    const getPersonalData = async (webId: string) => {
-      const parsedN3 = await getResource(webId, authFetch.value)
-        .then((resp) => resp.text())
-        .then((respText) => parseToN3(respText, webId));
-      let query = parsedN3.store.getObjects(webId, VCARD("hasPhoto"), null);
-      const img = query.length > 0 ? query[0].value : "";
-      query = parsedN3.store.getObjects(webId, VCARD("fn"), null);
-      const name = query.length > 0 ? query[0].value : "";
-      query = parsedN3.store.getObjects(webId, LDP("inbox"), null);
-      const inbox = query.length > 0 ? query[0].value : "";
-      query = parsedN3.store.getObjects(webId, SPACE("storage"), null);
-      const storage = query.length > 0 ? query[0].value : "";
-      return { name, img, inbox, storage };
-    };
-
-    if (webId !== undefined)
-      watch(webId, () => {
-        if (webId.value === undefined) {
-          img.value = "";
-          name.value = "";
-          inbox.value = "";
-          storage.value = "";
-          return;
-        }
-        getPersonalData(webId.value).then((pd) => {
-          img.value = pd.img;
-          name.value = pd.name;
-          inbox.value = pd.inbox;
-          storage.value = pd.storage
-        });
-      });
 
     const inboxBadge = computed(() => ldns.value.length);
 
