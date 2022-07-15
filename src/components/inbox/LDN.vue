@@ -1,5 +1,10 @@
 <template>
-  <Card class="mt-2 mb-2" :class="{ highlight: isSelected }" @click="select">
+  <Card
+    class="mt-2 mb-2"
+    :class="{ highlight: isSelected }"
+    @click="select"
+    v-if="isVisible"
+  >
     <template #content>
       <div class="hidden sm:inline-block">
         <div class="text-primary uri-text">
@@ -17,7 +22,7 @@
       </div>
       <div class="flex justify-content-between mt-2">
         <Button
-          v-if="!uri.includes('wallet')"
+          v-if="isSaveable"
           icon="pi  pi-save"
           class="p-button-outlined p-button-rounded p-button-raised"
           @click="
@@ -26,6 +31,13 @@
             )
           "
         />
+        <Button
+          v-else
+          disabled
+          icon=""
+          class="p-button-rounded p-button-text"
+        />
+
         <Button
           v-if="displayShort"
           icon="pi  pi-angle-double-down"
@@ -67,6 +79,8 @@ export default defineComponent({
     const { wallet } = useSolidProfile();
 
     const displayShort = ref(true);
+    const isVisible = ref(false);
+    const isSaveable = ref(false);
 
     let ldn = ref("Message loading.");
     let ldnotification = ref("Message loading.");
@@ -81,6 +95,7 @@ export default defineComponent({
             case "application/ld+json":
               ldnotification.value = JSON.parse(txt); //["credentialSubject"];
               ldn.value = JSON.parse(txt)["credentialSubject"];
+              isSaveable.value = true;
               break;
             case "text/turtle":
               ldnotification.value = txt;
@@ -90,6 +105,7 @@ export default defineComponent({
               ldnotification.value = txt;
               ldn.value = txt;
           }
+          isVisible.value = true;
         })
       )
       .catch((err) => (error.value = err));
@@ -114,6 +130,8 @@ export default defineComponent({
     };
 
     return {
+      isVisible,
+      isSaveable,
       ldn,
       ldnotification,
       authFetch,
