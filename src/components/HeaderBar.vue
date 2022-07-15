@@ -116,6 +116,7 @@ export default defineComponent({
   height: 75px;
   border: 0;
   box-shadow: 0 0 10px -5px black;
+  z-index: 1;
 }
 .p-toolbar-group-left {
   span {
