@@ -63,7 +63,7 @@ export default defineComponent({
   transform: translateX(80%);
 }
 .list-leave-active {
-  position: absolute;
+  position: fixed;
 }
 .list-move {
   transition: all 1s;
