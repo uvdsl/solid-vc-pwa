@@ -3,7 +3,6 @@
     class="mt-2 mb-2"
     :class="{ highlight: isSelected }"
     @click="select"
-    v-if="isVisible"
   >
     <template #content>
       <div class="hidden sm:inline-block">
@@ -79,7 +78,6 @@ export default defineComponent({
     const { wallet } = useSolidProfile();
 
     const displayShort = ref(true);
-    const isVisible = ref(false);
     const isSaveable = ref(false);
 
     let ldn = ref("Message loading.");
@@ -105,7 +103,6 @@ export default defineComponent({
               ldnotification.value = txt;
               ldn.value = txt;
           }
-          isVisible.value = true;
         })
       )
       .catch((err) => (error.value = err));
@@ -130,7 +127,6 @@ export default defineComponent({
     };
 
     return {
-      isVisible,
       isSaveable,
       ldn,
       ldnotification,
@@ -147,6 +143,9 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+.p-card {
+  border-radius: 2rem;
+}
 .uri-text {
   white-space: pre-line;
   overflow: hidden;

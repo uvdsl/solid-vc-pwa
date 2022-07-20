@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
-// import Home from "@/views/Home.vue";
-import Scribe from "@/views/Scribe.vue";
-import Wallet from "@/views/Wallet.vue";
+import Home from "@/views/Home.vue";
+import Wallet from "@/views/holder/Wallet.vue";
+import Creator from "@/views/issuer/Creator.vue";
 import Inbox from "@/views/Inbox.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Home",
-    component: Scribe,
+    component: Home,
   },
   {
     path: "/inbox/",
@@ -19,6 +19,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/wallet/",
     name: "Wallet",
     component: Wallet
+  },
+  {
+    path: "/issue/",
+    name: "Creator",
+    component: Creator
   },
   {
     path: "/about",

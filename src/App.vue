@@ -5,6 +5,8 @@
     <router-link to="/about">About</router-link>
   </div> -->
   <router-view />
+  <div style="height: 75px" />
+  <!-- This div is a buffer area for the bottom navigation tool (speeddial or other) -->
 
   <Dialog
     header="We updated the App!"

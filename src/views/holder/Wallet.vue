@@ -1,7 +1,7 @@
 <template>
   <div class="grid">
     <div class="col lg:col-6 lg:col-offset-3">
-      <LDNs v-if="isLoggedIn" />
+      <Credentials v-if="isLoggedIn" />
     </div>
   </div>
   <div>
@@ -16,19 +16,20 @@
 </template>
 
 <script lang="ts">
-import LDNs from "@/components/inbox/LDNs.vue";
+import Credentials from "@/components/wallet/Credentials.vue";
 import { useSolidSession } from "@/composables/useSolidSession";
 import router from "@/router";
 
 import { defineComponent, toRefs } from "vue";
 
 export default defineComponent({
-  name: "Inbox",
-  components: { LDNs },
+  name: "Wallet",
+  components: { Credentials },
   setup() {
     const { sessionInfo } = useSolidSession();
     const { isLoggedIn } = toRefs(sessionInfo);
 
+    // Speeddial
     const speedDialActions = [
       {
         label: "Back.",
@@ -36,6 +37,7 @@ export default defineComponent({
         command: () => router.push("/"),
       },
     ];
+
     return { isLoggedIn, speedDialActions };
   },
 });

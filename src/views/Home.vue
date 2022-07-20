@@ -18,18 +18,14 @@
     <div class="col lg:col-6 lg:col-offset-3">
       <Textarea v-model="content" class="sizing" />
     </div>
-  </div>
-  <div class="grid">
-    <div class="col lg:col-6 lg:col-offset-3">
-      <SpeedDial
-        v-if="isLoggedIn"
-        :model="speedDialActions"
-        type="semi-circle"
-        :radius="75"
-        showIcon="pi pi-ellipsis-h"
-        :tooltipOptions="{ position: 'top' }"
-      />
-    </div>
+  <SpeedDial
+    v-if="isLoggedIn"
+    :model="speedDialActions"
+    type="semi-circle"
+    :radius="75"
+    showIcon="pi pi-ellipsis-h"
+    :tooltipOptions="{ position: 'top' }"
+  />
   </div>
   <CredDialog
     @selectedCredential="selectCred"
@@ -63,7 +59,7 @@ import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
 import { signBBS, verifyBBS } from "@/lib/bbs";
 
 export default defineComponent({
-  name: "Scribe",
+  name: "Home",
   components: { CredDialog, DisclosureDialog, KeyDialog },
   setup(props, context) {
     const toast = useToast();
@@ -128,132 +124,15 @@ export default defineComponent({
 
     // Speeddial
     const speedDialActions = [
-      // {
-      //   label: "PUT Resource",
-      //   icon: "pi pi-save",
-      //   tooltipOptions: "left",
-      //   command: async () => {
-      //     if (!isHTTP.value) {
-      //       toast.add({
-      //         severity: "error",
-      //         summary: "Missing URI to save at!",
-      //         detail: "Specify a HTTP-URI in the search bar.",
-      //         life: 5000,
-      //       });
-      //       return;
-      //     }
-      //     putResource(uri.value, content.value, authFetch.value)
-      //       .then(() =>
-      //         toast.add({
-      //           severity: "success",
-      //           summary: "Successful Save!",
-      //           detail: "The resource has been put at the URI.",
-      //           life: 5000,
-      //         })
-      //       )
-      //       .catch((err) =>
-      //         toast.add({
-      //           severity: "error",
-      //           summary: "Error on save!",
-      //           detail: err,
-      //           life: 5000,
-      //         })
-      //       );
-      //   },
-      // },
-      // {
-      //   label: "POST to Container",
-      //   icon: "pi pi-envelope",
-      //   tooltipOptions: "left",
-      //   command: async () => {
-      //     if (!isHTTP.value) {
-      //       toast.add({
-      //         severity: "error",
-      //         summary: "Missing URI to save at!",
-      //         detail: "Specify a HTTP-URI in the search bar.",
-      //         life: 5000,
-      //       });
-      //       return;
-      //     }
-      //     createResource(uri.value, content.value, authFetch.value)
-      //       .then(() =>
-      //         toast.add({
-      //           severity: "success",
-      //           summary: "Successful Save!",
-      //           detail: "The resource has been posted to the container URI.",
-      //           life: 5000,
-      //         })
-      //       )
-      //       .catch((err) =>
-      //         toast.add({
-      //           severity: "error",
-      //           summary: "Error on save!",
-      //           detail: err,
-      //           life: 5000,
-      //         })
-      //       );
-      //   },
-      // },
-      // {
-      //   label: "Check Syntax",
-      //   icon: "pi pi-code",
-      //   command: () => {
-      //     parseToN3(content.value, uri.value)
-      //       .catch((err) => {
-      //         toast.add({
-      //           severity: "error",
-      //           summary: "Error while parsing!",
-      //           detail: err,
-      //           life: 5000,
-      //         });
-      //         throw new Error(err);
-      //       })
-      //       .then(() =>
-      //         toast.add({
-      //           severity: "success",
-      //           summary: "Correct Syntax.",
-      //           detail: "Good job!",
-      //           life: 5000,
-      //         })
-      //       );
-      //   },
-      // },
-      // {
-      //   label: "Delete Resource",
-      //   icon: "pi pi-trash",
-      //   command: () => {
-      //     if (!isHTTP.value) {
-      //       toast.add({
-      //         severity: "error",
-      //         summary: "Missing URI to delete!",
-      //         detail: "Specify a HTTP-URI in the search bar.",
-      //         life: 5000,
-      //       });
-      //       return;
-      //     }
-      //     deleteResource(uri.value, authFetch.value)
-      //       .then(() =>
-      //         toast.add({
-      //           severity: "warn",
-      //           summary: "Successful Delete!",
-      //           detail: "The resource has been deleted.",
-      //           life: 5000,
-      //         })
-      //       )
-      //       .catch((err) =>
-      //         toast.add({
-      //           severity: "error",
-      //           summary: "Error on delete!",
-      //           detail: err,
-      //           life: 5000,
-      //         })
-      //       );
-      //   },
-      // },
       {
         label: "Show wallet.",
         icon: "pi pi-wallet",
         command: () => router.push("/wallet/"),
+      },
+            {
+        label: "New credential.",
+        icon: "pi pi-pencil",
+        command: () => router.push("/issue/"),
       },
       {
         label: "Unlock restricted resource.",
@@ -290,11 +169,10 @@ export default defineComponent({
       verifyBBS(signedCred);
       verifyBBS(signedCred, true);
       displayKeyDialog.value = false;
-      send(signedCred)
+      send(signedCred);
     };
 
     const send = async (cred: Object) => {
-
       isLoading.value = true;
 
       const recipient = new URL(uri.value);
@@ -336,7 +214,7 @@ export default defineComponent({
         .finally(() => {
           isLoading.value = false;
         });
-    }
+    };
 
     return {
       uri,
@@ -387,7 +265,7 @@ export default defineComponent({
   .p-speeddial {
     position: fixed;
     bottom: 0;
-    right: calc(50% - 2rem);
+    right: calc(50% - 32px);
     padding-bottom: 15px;
     -webkit-tap-highlight-color: transparent;
   }

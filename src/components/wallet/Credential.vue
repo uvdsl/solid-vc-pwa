@@ -124,6 +124,11 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+
+.p-card {
+  border-radius: 2rem;
+}
+
 .uri-text {
   white-space: pre-line;
   overflow: hidden;
