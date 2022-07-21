@@ -80,7 +80,7 @@
         <JsonObjectCreator
           :obj="cont"
           label="@context"
-          @dataUpdated="dataUpdated"
+          @dataUpdated="updateContext"
         />
       </div>
       <!-- 2 credential -->
@@ -88,15 +88,15 @@
         <JsonObjectCreator
           :obj="cred"
           label="credential"
-          @dataUpdated="dataUpdated"
+          @dataUpdated="updateCred"
         />
       </div>
       <!-- 3 credential -->
       <div v-if="step3isActive">
         <JsonObjectCreator
-          :obj="sub"
+          :obj="claims"
           label="credentialSubject"
-          @dataUpdated="dataUpdated"
+          @dataUpdated="updateClaims"
         />
       </div>
     </div>
@@ -151,31 +151,19 @@ export default defineComponent({
         type: ["Person"],
       },
     });
-    const cont = ref(credential.value["@context"]);
-    const sub = ref(credential.value["credentialSubject"]);
+    const cont = ref(credential.value["@context"].slice(0));
+
+    const claims = ref({});
+    let subClone = Object.assign({}, credential.value["credentialSubject"]);
+    claims.value = subClone;
+
     const cred = ref({});
-    let clone = Object.assign({}, credential.value);
+    let credClone = Object.assign({}, credential.value);
     // @ts-ignore
-    delete clone["@context"];
+    delete credClone["@context"];
     // @ts-ignore
-    delete clone["credentialSubject"];
-    cred.value = clone;
-
-
-
-    // Speeddial
-    const speedDialActions = [
-      {
-        label: "Issue the credential.",
-        icon: "pi pi-cloud-upload",
-        command: () => (displayKeyDialog.value = true),
-      },
-      {
-        label: "Back.",
-        icon: "pi pi-arrow-circle-left",
-        command: () => router.push("/"),
-      },
-    ];
+    delete credClone["credentialSubject"];
+    cred.value = credClone;
 
     const displayKeyDialog = ref(false);
 
@@ -187,17 +175,46 @@ export default defineComponent({
     const step3isComplete = ref(false);
 
     watch(credential.value, () =>
-      console.log(JSON.stringify(credential.value))
+      console.log("CRED", JSON.stringify(credential.value))
     );
 
-    const dataUpdated = (updatedData: Object) => {
-      // @ts-ignore
-      if (updatedData["credential"]) {
-        // @ts-ignore
-        updatedData = updatedData["credential"];
-      }
-      Object.assign(credential.value, updatedData);
+    const updateContext = (updatedData: any) => {
+      // console.log("DATA CONTEXT", JSON.stringify(updatedData));
+      // console.log("CONTEXT", JSON.stringify(cont.value));
     };
+    const updateCred = (updatedData: any) => {
+      // console.log("DATA CRED", JSON.stringify(updatedData));
+      // console.log("CRED", JSON.stringify(cred.value));
+      // updatedData = updatedData["credential"];
+    };
+    const updateClaims = (updatedData: any) => {
+      // console.log("DATA CLAIMS", JSON.stringify(updatedData));
+      // console.log("CLAIMS", JSON.stringify(claims.value));
+    };
+
+    const submitCredential = () => {
+      const credentialSubmission = {} as any;
+      if (Object.keys(cont.value).length > 0)
+        credentialSubmission["@context"] = cont.value;
+      Object.assign(credentialSubmission, cred.value);
+      if (Object.keys(claims.value).length > 0)
+        credentialSubmission["credentialSubject"] = claims.value;
+      console.log(JSON.stringify(credentialSubmission));
+    };
+
+    // Speeddial
+    const speedDialActions = [
+      {
+        label: "Issue the credential.",
+        icon: "pi pi-cloud-upload",
+        command: submitCredential,
+      },
+      {
+        label: "Back.",
+        icon: "pi pi-arrow-circle-left",
+        command: () => router.push("/"),
+      },
+    ];
 
     return {
       step1isActive,
@@ -212,8 +229,11 @@ export default defineComponent({
       displayKeyDialog,
       cont,
       cred,
-      sub,
-      dataUpdated,
+      claims,
+      updateContext,
+      updateCred,
+      updateClaims,
+      submitCredential,
     };
   },
 });
