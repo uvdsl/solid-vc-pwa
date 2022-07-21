@@ -72,45 +72,50 @@ export default defineComponent({
     const toast = useToast();
 
     const val = ref(props.obj);
-    const proxy = ref();
+    const proxy = ref(); // proxy for array, without proxy the editing is not really possible
     if (Array.isArray(val.value)) proxy.value = val.value.slice(0);
 
     const dataUpdated = (updatedData?: any) => {
-      console.log("UP", props.label, val.value, proxy.value, updatedData);
-      const upData = {};
-      // IF VALUE
+      const upData = {}; // for bubbeling new values upwards
+      // needed for updating within the json object
+      // IF VALUE undefined
       if (!updatedData) {
         // @ts-ignore
         upData[props.label] = val.value;
         context.emit("dataUpdated", upData);
         return;
       }
+
+      const key = Object.keys(updatedData)[0];
+      const newValue = Object.values(updatedData)[0];
+
       // IF ARRAY
       if (Array.isArray(val.value)) {
         // replace the value at the index where the value matches the proxy value from the index that is to be replaced.
-        val.value[val.value.indexOf(proxy.value[Object.keys(updatedData)[0]])] = Object.values(updatedData)[0];
-        proxy.value[Object.keys(updatedData)[0]] = Object.values(updatedData)[0];
-        if (Object.values(updatedData)[0] === undefined) {
-          // val.value.splice(Object.keys(updatedData)[0], 1); // 2nd parameter means remove one item only
+        val.value[val.value.indexOf(proxy.value[key])] = newValue; // update val
+        proxy.value[key] = newValue; // update proxy as well
+        if (newValue === undefined) { // if value was deleted
           // @ts-ignore
-          val.value.length = 0;
-          // @ts-ignore
-          proxy.value.filter(e => e !== undefined).forEach(e => val.value.push(e));
+          val.value.length = 0; // clear val array
+          proxy.value // push remaining values from proxy
+            // @ts-ignore
+            .filter((e) => e !== undefined)
+            // @ts-ignore
+            .forEach((e) => val.value.push(e));
         }
         // @ts-ignore
-        upData[props.label] = val.value.length > 0 ? val.value : undefined;
+        upData[props.label] = val.value.length > 0 ? val.value : undefined; // if array empty, remove array.
         context.emit("dataUpdated", upData);
         return;
       }
       // IF OBJECT
-      if (Object.values(updatedData)[0] === undefined) {
-        delete val.value[Object.keys(updatedData)[0]];
-      } else if (val.value === Object(val.value)) {
-        val.value[Object.keys(updatedData)[0]] = Object.values(updatedData)[0];
+      if (newValue === undefined) { // if value was deleted
+        delete val.value[key]; // delete value in val
+      } else if (val.value === Object(val.value)) { // else (and val is really an object)
+        val.value[key] = newValue; // update value in val
       }
       // @ts-ignore
-      upData[props.label] = val.value;
-      console.log("UPDATA", props.label, val.value, upData);
+      upData[props.label] = val.value; // wrap updated data
       context.emit("dataUpdated", upData);
       return;
     };
