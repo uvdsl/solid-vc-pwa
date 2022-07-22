@@ -48,6 +48,7 @@ export default defineComponent({
           detail: "Key already exists.",
           life: 5000,
         });
+        return;
       }
       context.emit("setKey", newKey.value);
       context.emit("hide");
