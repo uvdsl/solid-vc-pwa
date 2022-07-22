@@ -16,14 +16,9 @@
     </div>
   </div>
   <!-- ARRAY -->
-  <div
-    v-else-if="Array.isArray(obj)"
-    class="array"
-    :key="rerender"
-    :class="{ 'ml-4': isInArray }"
-  >
+  <div v-else-if="Array.isArray(obj)" class="array" :key="rerender">
     <div>{{ isInArray ? "At parent array index " : "" }}{{ label }}</div>
-    <div v-for="(e, i) in proxy" :key="'' + i">
+    <div v-for="(e, i) in proxy" :key="'' + i" :class="{ 'ml-4': isInArray }">
       <JsonObjectCreator
         v-if="e !== undefined"
         :obj="obj[i]"
@@ -31,6 +26,7 @@
         isInArray
         @dataUpdated="dataUpdated"
         @dataToArray="handleToArray"
+        @dataToObject="handleToObject"
       />
     </div>
     <Button
@@ -45,7 +41,7 @@
   <div v-else class="obj" :key="rerender">
     <div>
       <Divider />
-      {{ label }}
+      {{ isInArray ? "At parent array index " : "" }}{{ label }}
     </div>
     <Button
       class="p-button-rounded p-button-outlined p-button-help"
@@ -60,12 +56,13 @@
       :obj="val"
       @setKey="addToObject"
     />
-    <div v-for="e in Object.entries(obj)" :key="e[0]" class="obj-vals">
+    <div v-for="e in Object.entries(obj)" :key="e[0]" class="ml-4">
       <JsonObjectCreator
         :obj="obj[e[0]]"
         :label="e[0]"
         @dataUpdated="dataUpdated"
         @dataToArray="handleToArray"
+        @dataToObject="handleToObject"
       />
     </div>
   </div>
@@ -84,7 +81,7 @@ export default defineComponent({
     label: { String, required: true },
     isInArray: Boolean,
   },
-  emits: ["dataUpdated", "dataToArray"],
+  emits: ["dataUpdated", "dataToArray", "dataToObject"],
   setup(props, context) {
     const toast = useToast();
     const displayKeyDialog = ref(false);
@@ -145,16 +142,34 @@ export default defineComponent({
     watch(val, dataUpdated);
 
     const deleteValue = () => (val.value = undefined);
+
+    const addToArray = () => {
+      val.value.push("");
+      proxy.value.push("");
+    };
+
+    const addToObject = (key: string) => {
+      val.value[key] = "";
+    };
+
     const toArray = () => {
       context.emit("dataToArray", { key: props.label, value: [val.value] });
     };
     const handleToArray = (data: any) => {
-      console.log(data);
       val.value[data.key] = data.value;
       if (proxy.value) proxy.value[data.key] = data.value;
       rerender.value = !rerender.value;
-      console.log(val.value);
-      console.log(proxy.value);
+    };
+
+    const toObject = () => {
+      const emitObj = {} as any;
+      emitObj.id = val.value;
+      context.emit("dataToObject", { key: props.label, value: emitObj });
+    };
+    const handleToObject = (data: any) => {
+      val.value[data.key] = data.value;
+      if (proxy.value) proxy.value[data.key] = data.value;
+      rerender.value = !rerender.value;
     };
 
     const menuValue = ref();
@@ -170,14 +185,7 @@ export default defineComponent({
       {
         label: "Convert to object",
         icon: "pi pi-sitemap",
-        command: () => {
-          toast.add({
-            severity: "success",
-            summary: "Updated",
-            detail: "Data Updated",
-            life: 3000,
-          });
-        },
+        command: toObject,
       },
       {
         separator: true,
@@ -188,15 +196,6 @@ export default defineComponent({
         command: deleteValue,
       },
     ]);
-
-    const addToArray = () => {
-      val.value.push("");
-      proxy.value.push("");
-    };
-
-    const addToObject = (key: string) => {
-      val.value[key] = "";
-    };
 
     return {
       rerender,
@@ -210,6 +209,7 @@ export default defineComponent({
       addToArray,
       addToObject,
       handleToArray,
+      handleToObject,
     };
   },
 });
@@ -235,9 +235,7 @@ export default defineComponent({
 .obj {
   margin: 20px 0px 20px 0px;
 }
-.obj-vals {
-  margin-left: 30px;
-}
+
 .p-inputgroup {
   padding-bottom: 0px;
 }
