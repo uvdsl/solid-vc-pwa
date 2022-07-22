@@ -6,10 +6,10 @@
       <InputText v-model="val" />
       <Button
         :disabled="label === 'id'"
-        :style="{ 'visibility': label === 'id' ? 'hidden' : 'visible' }"
+        :style="{ visibility: label === 'id' ? 'hidden' : 'visible' }"
         class="p-button-rounded p-button-outlined"
         icon="pi pi-ellipsis-h"
-        style="margin-top: 5px; margin-left: 5px;  transform: scale(0.75)"
+        style="margin-top: 5px; margin-left: 5px; transform: scale(0.75)"
         @click="toggleValueMenu"
       />
       <Menu ref="menuValue" :model="items" :popup="true" />
@@ -34,6 +34,7 @@
       :label="'Add to \'' + label + '\' array'"
       icon="pi pi-plus"
       style="margin-top: 5px; transform: scale(0.75)"
+      @click="addToArray"
     />
   </div>
   <!-- OBJECT -->
@@ -47,6 +48,13 @@
       :label="'Add to \'' + label + '\' object'"
       icon="pi pi-plus"
       style="margin-top: 5px; transform: scale(0.75)"
+      @click="displayKeyDialog = true"
+    />
+    <ObjectKeyCreatorDialog
+      @hide="displayKeyDialog = false"
+      :display="displayKeyDialog"
+      :obj="val"
+      @setKey="addToObject"
     />
     <div v-for="e in Object.entries(obj)" :key="e[0]" class="obj-vals">
       <JsonObjectCreator
@@ -61,9 +69,11 @@
 <script lang="ts">
 import { useToast } from "primevue/usetoast";
 import { defineComponent, reactive, ref, watch } from "vue";
+import ObjectKeyCreatorDialog from "@/components/creator/ObjectKeyCreatorDialog.vue";
 
 export default defineComponent({
   name: "JsonObjectCreator",
+  components: { ObjectKeyCreatorDialog },
   props: {
     obj: null,
     label: { String, required: true },
@@ -72,6 +82,7 @@ export default defineComponent({
   emits: ["dataUpdated"],
   setup(props, context) {
     const toast = useToast();
+    const displayKeyDialog = ref(false);
 
     const val = ref(props.obj);
     const proxy = ref(); // proxy for array, without proxy the editing is not really possible
@@ -168,13 +179,25 @@ export default defineComponent({
       },
     ]);
 
+    const addToArray = () => {
+      val.value.push("");
+      proxy.value.push("");
+    };
+
+    const addToObject = (key: string) => {
+      val.value[key] = "";
+    };
+
     return {
+      displayKeyDialog,
       val,
       proxy,
       dataUpdated,
       menuValue,
       toggleValueMenu,
       items,
+      addToArray,
+      addToObject,
     };
   },
 });
