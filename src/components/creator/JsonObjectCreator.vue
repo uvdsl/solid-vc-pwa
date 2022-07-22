@@ -16,10 +16,13 @@
     </div>
   </div>
   <!-- ARRAY -->
-  <div v-else-if="Array.isArray(obj)" class="array">
-    <div>
-      {{ label }}
-    </div>
+  <div
+    v-else-if="Array.isArray(obj)"
+    class="array"
+    :key="rerender"
+    :class="{ 'ml-4': isInArray }"
+  >
+    <div>{{ isInArray ? "At parent array index " : "" }}{{ label }}</div>
     <div v-for="(e, i) in proxy" :key="'' + i">
       <JsonObjectCreator
         v-if="e !== undefined"
@@ -27,6 +30,7 @@
         :label="'' + i"
         isInArray
         @dataUpdated="dataUpdated"
+        @dataToArray="handleToArray"
       />
     </div>
     <Button
@@ -38,7 +42,7 @@
     />
   </div>
   <!-- OBJECT -->
-  <div v-else class="obj">
+  <div v-else class="obj" :key="rerender">
     <div>
       <Divider />
       {{ label }}
@@ -61,6 +65,7 @@
         :obj="obj[e[0]]"
         :label="e[0]"
         @dataUpdated="dataUpdated"
+        @dataToArray="handleToArray"
       />
     </div>
   </div>
@@ -79,10 +84,11 @@ export default defineComponent({
     label: { String, required: true },
     isInArray: Boolean,
   },
-  emits: ["dataUpdated"],
+  emits: ["dataUpdated", "dataToArray"],
   setup(props, context) {
     const toast = useToast();
     const displayKeyDialog = ref(false);
+    const rerender = ref(false);
 
     const val = ref(props.obj);
     const proxy = ref(); // proxy for array, without proxy the editing is not really possible
@@ -139,6 +145,17 @@ export default defineComponent({
     watch(val, dataUpdated);
 
     const deleteValue = () => (val.value = undefined);
+    const toArray = () => {
+      context.emit("dataToArray", { key: props.label, value: [val.value] });
+    };
+    const handleToArray = (data: any) => {
+      console.log(data);
+      val.value[data.key] = data.value;
+      if (proxy.value) proxy.value[data.key] = data.value;
+      rerender.value = !rerender.value;
+      console.log(val.value);
+      console.log(proxy.value);
+    };
 
     const menuValue = ref();
     const toggleValueMenu = (event: Event) => {
@@ -148,14 +165,7 @@ export default defineComponent({
       {
         label: "Convert to array",
         icon: "pi pi-list",
-        command: () => {
-          toast.add({
-            severity: "success",
-            summary: "Updated",
-            detail: "Data Updated",
-            life: 3000,
-          });
-        },
+        command: toArray,
       },
       {
         label: "Convert to object",
@@ -189,6 +199,7 @@ export default defineComponent({
     };
 
     return {
+      rerender,
       displayKeyDialog,
       val,
       proxy,
@@ -198,6 +209,7 @@ export default defineComponent({
       items,
       addToArray,
       addToObject,
+      handleToArray,
     };
   },
 });
