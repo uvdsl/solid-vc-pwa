@@ -138,7 +138,7 @@ export default defineComponent({
       issuer: webId?.value,
       issuanceDate: new Date().toISOString(),
       description:
-        "An example credential, self-issued to assert oneself is a Person.",
+        "An example credential, self-issued to assert: I am a Person.",
       credentialSubject: {
         id: webId?.value,
         type: ["Person"],

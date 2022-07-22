@@ -9,7 +9,7 @@
         :style="{ 'visibility': label === 'id' ? 'hidden' : 'visible' }"
         class="p-button-rounded p-button-outlined"
         icon="pi pi-ellipsis-h"
-        style="margin-top: 5px; transform: scale(0.75)"
+        style="margin-top: 5px; margin-left: 5px;  transform: scale(0.75)"
         @click="toggleValueMenu"
       />
       <Menu ref="menuValue" :model="items" :popup="true" />
