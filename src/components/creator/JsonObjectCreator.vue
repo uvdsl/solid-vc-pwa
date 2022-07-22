@@ -5,6 +5,8 @@
     <div class="p-inputgroup">
       <InputText v-model="val" />
       <Button
+        :disabled="label === 'id'"
+        :style="{ 'visibility': label === 'id' ? 'hidden' : 'visible' }"
         class="p-button-rounded p-button-outlined"
         icon="pi pi-ellipsis-h"
         style="margin-top: 5px; transform: scale(0.75)"
@@ -94,7 +96,8 @@ export default defineComponent({
         // replace the value at the index where the value matches the proxy value from the index that is to be replaced.
         val.value[val.value.indexOf(proxy.value[key])] = newValue; // update val
         proxy.value[key] = newValue; // update proxy as well
-        if (newValue === undefined) { // if value was deleted
+        if (newValue === undefined) {
+          // if value was deleted
           // @ts-ignore
           val.value.length = 0; // clear val array
           proxy.value // push remaining values from proxy
@@ -109,9 +112,11 @@ export default defineComponent({
         return;
       }
       // IF OBJECT
-      if (newValue === undefined) { // if value was deleted
+      if (newValue === undefined) {
+        // if value was deleted
         delete val.value[key]; // delete value in val
-      } else if (val.value === Object(val.value)) { // else (and val is really an object)
+      } else if (val.value === Object(val.value)) {
+        // else (and val is really an object)
         val.value[key] = newValue; // update value in val
       }
       // @ts-ignore
@@ -129,33 +134,33 @@ export default defineComponent({
       menuValue.value.toggle(event);
     };
     const items = ref([
-      // {
-      //   label: "Convert to array",
-      //   icon: "pi pi-list",
-      //   command: () => {
-      //     toast.add({
-      //       severity: "success",
-      //       summary: "Updated",
-      //       detail: "Data Updated",
-      //       life: 3000,
-      //     });
-      //   },
-      // },
-      //  {
-      //   label: "Convert to object",
-      //   icon: "pi pi-sitemap",
-      //   command: () => {
-      //     toast.add({
-      //       severity: "success",
-      //       summary: "Updated",
-      //       detail: "Data Updated",
-      //       life: 3000,
-      //     });
-      //   },
-      // },
-      // {
-      //   separator: true,
-      // },
+      {
+        label: "Convert to array",
+        icon: "pi pi-list",
+        command: () => {
+          toast.add({
+            severity: "success",
+            summary: "Updated",
+            detail: "Data Updated",
+            life: 3000,
+          });
+        },
+      },
+      {
+        label: "Convert to object",
+        icon: "pi pi-sitemap",
+        command: () => {
+          toast.add({
+            severity: "success",
+            summary: "Updated",
+            detail: "Data Updated",
+            life: 3000,
+          });
+        },
+      },
+      {
+        separator: true,
+      },
       {
         label: "Delete",
         icon: "pi pi-times",

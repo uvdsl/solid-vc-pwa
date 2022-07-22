@@ -75,28 +75,20 @@
         </div>
       </div>
 
-      <!-- <JsonObjectCreator :obj="credential" label="credential" /> -->
       <div v-if="step1isActive">
-        <JsonObjectCreator
-          :obj="cont"
-          label="@context"
-          @dataUpdated="updateContext"
-        />
+        <!-- 1. context -->
+        <JsonObjectCreator :obj="cont" label="@context" :key="rerender" />
       </div>
       <!-- 2 credential -->
       <div v-if="step2isActive">
-        <JsonObjectCreator
-          :obj="cred"
-          label="credential"
-          @dataUpdated="updateCred"
-        />
+        <JsonObjectCreator :obj="cred" label="credential" :key="rerender" />
       </div>
-      <!-- 3 credential -->
+      <!-- 3 claims -->
       <div v-if="step3isActive">
         <JsonObjectCreator
           :obj="claims"
           label="credentialSubject"
-          @dataUpdated="updateClaims"
+          :key="rerender"
         />
       </div>
     </div>
@@ -131,10 +123,11 @@ export default defineComponent({
     const { authFetch, sessionInfo } = useSolidSession();
     const { isLoggedIn, webId } = toRefs(sessionInfo);
     const isLoading = ref(false);
+    const rerender = ref(false);
 
     // content of the information resource
 
-    const credential = ref({
+    const defaultCredential = ref({
       "@context": [
         "https://www.w3.org/2018/credentials/v1",
         "https://w3id.org/citizenship/v1",
@@ -151,17 +144,18 @@ export default defineComponent({
         type: ["Person"],
       },
     });
-    const cont = ref(credential.value["@context"].slice(0));
+    const cont = ref(defaultCredential.value["@context"].slice(0));
 
     const claims = ref({});
-    let subClone = Object.assign({}, credential.value["credentialSubject"]);
+    let subClone = Object.assign(
+      {},
+      defaultCredential.value["credentialSubject"]
+    );
     claims.value = subClone;
 
-    const cred = ref({});
-    let credClone = Object.assign({}, credential.value);
-    // @ts-ignore
+    const cred = ref({} as any);
+    let credClone = Object.assign({} as any, defaultCredential.value);
     delete credClone["@context"];
-    // @ts-ignore
     delete credClone["credentialSubject"];
     cred.value = credClone;
 
@@ -174,31 +168,85 @@ export default defineComponent({
     const step2isActive = ref(false);
     const step3isComplete = ref(false);
 
-    watch(credential.value, () =>
-      console.log("CRED", JSON.stringify(credential.value))
-    );
-
-    const updateContext = (updatedData: any) => {
-      // console.log("DATA CONTEXT", JSON.stringify(updatedData));
-      // console.log("CONTEXT", JSON.stringify(cont.value));
-    };
-    const updateCred = (updatedData: any) => {
-      // console.log("DATA CRED", JSON.stringify(updatedData));
-      // console.log("CRED", JSON.stringify(cred.value));
-      // updatedData = updatedData["credential"];
-    };
-    const updateClaims = (updatedData: any) => {
-      // console.log("DATA CLAIMS", JSON.stringify(updatedData));
-      // console.log("CLAIMS", JSON.stringify(claims.value));
-    };
+    watch(claims.value , () => {
+        if (!Object.keys(claims.value).includes("type")) {
+        toast.add({
+          severity: "warn",
+          summary: "Just saying:",
+          detail: "CredentialSubject MUST have an `type`.",
+          life: 5000,
+        });
+        return;
+      }
+    })
 
     const submitCredential = () => {
+      // CLAIMS
+      if (!Object.keys(claims.value).includes("id")) {
+        toast.add({
+          severity: "error",
+          summary: "Sorry?",
+          detail: "CredentialSubject MUST have an `id`.",
+          life: 5000,
+        });
+        return;
+      }
+      if (!Object.keys(claims.value).includes("type")) {
+        toast.add({
+          severity: "error",
+          summary: "Sorry?",
+          detail: "CredentialSubject MUST have a `type`.",
+          life: 5000,
+        });
+        return;
+      }
+
+      // CRED
+      if (!Object.keys(cred.value).includes("id")) {
+        toast.add({
+          severity: "error",
+          summary: "Sorry?",
+          detail: "Credential MUST have an `id`.",
+          life: 5000,
+        });
+        return;
+      }
+      if (
+        (!Array.isArray(cred.value["type"]) &&
+          cred.value["type"] !== "VerifiableCredential") ||
+        (Array.isArray(cred.value["type"]) &&
+          !cred.value["type"].includes("VerifiableCredential"))
+      ) {
+        toast.add({
+          severity: "info",
+          summary: "Missing `VerifiableCredential` as `type`.",
+          detail: "Adding it for you.",
+          life: 5000,
+        });
+        cred.value["type"] = cred.value["type"]
+          ? ["VerifiableCredential", cred.value["type"]].flat()
+          : "VerifiableCredential";
+        rerender.value = !rerender.value;
+      }
+
+      // CONTEXT
+      if (!cont.value.includes("https://www.w3.org/2018/credentials/v1")) {
+        toast.add({
+          severity: "info",
+          summary: "Missing Verifiable Credential context.",
+          detail: "Adding it for you.",
+          life: 5000,
+        });
+        cont.value = cont.value
+          ? ["https://www.w3.org/2018/credentials/v1", cont.value].flat()
+          : ["https://www.w3.org/2018/credentials/v1"];
+        rerender.value = !rerender.value;
+      }
+
       const credentialSubmission = {} as any;
-      if (Object.keys(cont.value).length > 0)
-        credentialSubmission["@context"] = cont.value;
+      credentialSubmission["@context"] = cont.value;
       Object.assign(credentialSubmission, cred.value);
-      if (Object.keys(claims.value).length > 0)
-        credentialSubmission["credentialSubject"] = claims.value;
+      credentialSubmission["credentialSubject"] = claims.value;
       console.log(JSON.stringify(credentialSubmission));
     };
 
@@ -217,6 +265,7 @@ export default defineComponent({
     ];
 
     return {
+      rerender,
       step1isActive,
       step2isActive,
       step3isActive,
@@ -230,9 +279,6 @@ export default defineComponent({
       cont,
       cred,
       claims,
-      updateContext,
-      updateCred,
-      updateClaims,
       submitCredential,
     };
   },
