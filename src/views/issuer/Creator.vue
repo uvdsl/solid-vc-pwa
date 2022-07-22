@@ -15,12 +15,7 @@
               step3isActive = false;
             "
           >
-            <i
-              v-if="step1isComplete"
-              class="pi pi-check"
-              style="font-size: 0.5rem; transform: scale(2.2)"
-            />
-            <span v-else>1</span>
+            <span>1</span>
           </Button>
           <Button
             label="2"
@@ -35,12 +30,7 @@
               step1isActive = false;
             "
           >
-            <i
-              v-if="step2isComplete"
-              class="pi pi-check"
-              style="font-size: 0.5rem; transform: scale(2.2)"
-            />
-            <span v-else>2</span>
+            <span>2</span>
           </Button>
           <Button
             label="3"
@@ -55,12 +45,7 @@
               step2isActive = false;
             "
           >
-            <i
-              v-if="step3isComplete"
-              class="pi pi-check"
-              style="font-size: 0.5rem; transform: scale(2.2)"
-            />
-            <span v-else>3</span>
+            <span>3</span>
           </Button>
         </div>
         <div
@@ -162,14 +147,11 @@ export default defineComponent({
     const displayKeyDialog = ref(false);
 
     const step1isActive = ref(true);
-    const step1isComplete = ref(false);
     const step3isActive = ref(false);
-    const step2isComplete = ref(false);
     const step2isActive = ref(false);
-    const step3isComplete = ref(false);
 
-    watch(claims.value , () => {
-        if (!Object.keys(claims.value).includes("type")) {
+    watch(claims.value, () => {
+      if (!Object.keys(claims.value).includes("type")) {
         toast.add({
           severity: "warn",
           summary: "Just saying:",
@@ -178,7 +160,7 @@ export default defineComponent({
         });
         return;
       }
-    })
+    });
 
     const submitCredential = () => {
       // CLAIMS
@@ -269,9 +251,6 @@ export default defineComponent({
       step1isActive,
       step2isActive,
       step3isActive,
-      step1isComplete,
-      step2isComplete,
-      step3isComplete,
       speedDialActions,
       isLoading,
       isLoggedIn,
