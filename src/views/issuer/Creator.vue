@@ -86,19 +86,25 @@
     />
   </div>
 
-  <KeyDialog @hide="displayKeyDialog = false" :display="displayKeyDialog" />
+  <KeyDialog
+    @hide="displayKeyDialog = false"
+    :display="displayKeyDialog"
+    @selectedCryptoKey="issueCred"
+  />
 </template>
 
 <script lang="ts">
 import { useToast } from "primevue/usetoast";
 import { useSolidSession } from "@/composables/useSolidSession";
-import { getResource, postResource } from "@/lib/solidRequests";
+import { getResource, parseToN3, postResource } from "@/lib/solidRequests";
 import { computed, defineComponent, reactive, ref, toRefs, watch } from "vue";
 import KeyDialog from "@/components/keys/KeyDialog.vue";
 import JsonObjectCreator from "@/components/creator/JsonObjectCreator.vue";
 import router from "@/router";
 import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
 import { signBBS, verifyBBS } from "@/lib/bbs";
+import { LDP } from "@/lib/namespaces";
+import { useSolidProfile } from "@/composables/useSolidProfile";
 
 export default defineComponent({
   name: "Creator",
@@ -107,6 +113,7 @@ export default defineComponent({
     const toast = useToast();
     const { authFetch, sessionInfo } = useSolidSession();
     const { isLoggedIn, webId } = toRefs(sessionInfo);
+    const { wallet, inbox } = useSolidProfile();
     const isLoading = ref(false);
     const rerender = ref(false);
 
@@ -229,7 +236,39 @@ export default defineComponent({
       credentialSubmission["@context"] = cont.value;
       Object.assign(credentialSubmission, cred.value);
       credentialSubmission["credentialSubject"] = claims.value;
-      console.log(JSON.stringify(credentialSubmission));
+      defaultCredential.value = credentialSubmission;
+      displayKeyDialog.value = true;
+    };
+
+    const issueCred = async (key: Bls12381G2KeyPair) => {
+      displayKeyDialog.value = false;
+      isLoading.value = true;
+      const signedCred = await signBBS(defaultCredential.value, key);
+      // send to CredentialSubject's inbox
+      const csWebId = defaultCredential.value.credentialSubject.id as string;
+      const store = await getResource(csWebId, authFetch.value)
+        .then((resp) => resp.text())
+        .then((respText) => parseToN3(respText, csWebId))
+        .then((parsedN3) => parsedN3.store);
+      const query = store.getObjects(csWebId, LDP("inbox"), null);
+      const csInbox = query.length > 0 ? query[0].value : "";
+      const csPost = postResource(csInbox, JSON.stringify(signedCred), fetch, {
+        "Content-type": "application/ld+json",
+      });
+      // store the credential as issued credential in own Pod
+      const issuerPost = postResource(inbox.value, JSON.stringify(signedCred), fetch, {
+        "Content-type": "application/ld+json",
+      });
+      Promise.all([csPost, issuerPost])
+        .then(() =>
+          toast.add({
+            severity: "success",
+            summary: "Success!",
+            detail: `Credential has been issued.`,
+            life: 5000,
+          })
+        )
+        .finally(() => (isLoading.value = false));
     };
 
     // Speeddial
@@ -255,6 +294,7 @@ export default defineComponent({
       isLoading,
       isLoggedIn,
       displayKeyDialog,
+      issueCred,
       cont,
       cred,
       claims,
