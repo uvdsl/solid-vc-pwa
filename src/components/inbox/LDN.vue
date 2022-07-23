@@ -1,15 +1,39 @@
 <template>
-  <Card
-    class="mt-2 mb-2"
-    :class="{ highlight: isSelected }"
-    @click="select"
-  >
+  <Card class="mt-2 mb-2" :class="{ highlight: isSelected }" @click="select">
     <template #content>
-      <div class="hidden sm:inline-block">
-        <div class="text-primary uri-text">
-          {{ uri }}
+      <div
+        class="
+          flex
+          justify-content-end
+          sm:justify-content-between
+          align-items-start
+        "
+      >
+        <div class="hidden sm:inline-block">
+          <div class="text-primary uri-text">
+            {{ uri }}
+          </div>
+          <Divider />
         </div>
-        <Divider />
+        <div
+          v-if="isSaveable"
+          class="p-button p-button-outlined p-button-rounded"
+          :class="{
+            'p-button-danger': isVerified === false,
+            'p-button-warning': isVerified === undefined,
+          }"
+          style="cursor: auto"
+        >
+          <span class="mr-2">Signature</span>
+          <i
+            :class="{
+              pi: true,
+              'pi-thumbs-up': isVerified,
+              'pi-thumbs-down': !isVerified,
+              'pi-spin': isVerified === undefined,
+            }"
+          />
+        </div>
       </div>
       <div class="ldn-text">
         <span v-if="!error">
@@ -63,6 +87,7 @@
 <script lang="ts">
 import { useSolidProfile } from "@/composables/useSolidProfile";
 import { useSolidSession } from "@/composables/useSolidSession";
+import { verifyBBS } from "@/lib/bbs";
 import { deleteResource, getResource, postResource } from "@/lib/solidRequests";
 import { defineComponent, ref, watch } from "vue";
 export default defineComponent({
@@ -84,6 +109,7 @@ export default defineComponent({
     let ldnotification = ref("Message loading.");
     let contentType = ref();
     let error = ref();
+    const isVerified = ref();
 
     getResource(props.uri, authFetch.value)
       .then((resp) =>
@@ -93,6 +119,9 @@ export default defineComponent({
             case "application/ld+json":
               ldnotification.value = JSON.parse(txt); //["credentialSubject"];
               ldn.value = JSON.parse(txt)["credentialSubject"];
+              verifyBBS(ldnotification.value).then(
+                (result) => (isVerified.value = result.verified)
+              );
               isSaveable.value = true;
               break;
             case "text/turtle":
@@ -128,6 +157,7 @@ export default defineComponent({
 
     return {
       isSaveable,
+      isVerified,
       ldn,
       ldnotification,
       authFetch,

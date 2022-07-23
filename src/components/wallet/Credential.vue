@@ -1,11 +1,38 @@
 <template>
   <Card class="mt-2 mb-2" :class="{ highlight: isSelected }" @click="select">
     <template #content>
-      <div class="hidden sm:inline-block">
-        <div class="text-primary uri-text">
-          {{ uri }}
+      <div
+        class="
+          flex
+          justify-content-end
+          sm:justify-content-between
+          align-items-start
+        "
+      >
+        <div class="hidden sm:inline-block">
+          <div class="text-primary uri-text">
+            {{ uri }}
+          </div>
+          <Divider />
         </div>
-        <Divider />
+        <div
+          class="p-button p-button-outlined p-button-rounded"
+          :class="{
+            'p-button-danger': isVerified === false,
+            'p-button-warning': isVerified === undefined,
+          }"
+          style="cursor: auto"
+        >
+          <span class="mr-2">Signature</span>
+          <i
+            :class="{
+              pi: true,
+              'pi-thumbs-up': isVerified,
+              'pi-thumbs-down': !isVerified,
+              'pi-spin': isVerified === undefined,
+            }"
+          />
+        </div>
       </div>
       <div class="cred-text">
         <span v-if="!error">
@@ -39,11 +66,11 @@
 </template>
 
 <script lang="ts">
-import { useSolidProfile } from "@/composables/useSolidProfile";
 import { useSolidSession } from "@/composables/useSolidSession";
 import { deleteResource, getResource, postResource } from "@/lib/solidRequests";
 import { defineComponent, ref, watch } from "vue";
 import { useCache } from "@/composables/useCache";
+import { verifyBBS } from "@/lib/bbs";
 export default defineComponent({
   name: "Credential",
   components: {},
@@ -54,7 +81,6 @@ export default defineComponent({
   emits: ["selectedCredential"],
   setup(props, context) {
     const { authFetch } = useSolidSession();
-    const { wallet } = useSolidProfile();
 
     const displayShort = ref(true);
 
@@ -62,6 +88,7 @@ export default defineComponent({
     let credential = ref("Credential loading.");
     let contentType = ref();
     let error = ref();
+    const isVerified = ref();
 
     const cache = useCache();
 
@@ -92,6 +119,14 @@ export default defineComponent({
       cred.value = JSON.parse(cache[props.uri])["credentialSubject"];
     }
 
+    watch(
+      credential,
+      async () => {
+        isVerified.value = (await verifyBBS(credential.value)).verified;
+      },
+      { immediate: true }
+    );
+
     const isSelected = ref(false);
     watch(
       () => props.selectFlag,
@@ -118,13 +153,13 @@ export default defineComponent({
       select,
       displayShort,
       deleteRes,
+      isVerified,
     };
   },
 });
 </script>
 
 <style lang="scss" scoped>
-
 .p-card {
   border-radius: 2rem;
 }
