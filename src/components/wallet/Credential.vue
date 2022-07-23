@@ -18,8 +18,8 @@
         <div
           class="p-button p-button-outlined p-button-rounded"
           :class="{
-            'p-button-danger': isVerified === false,
             'p-button-warning': isVerified === undefined,
+            'p-button-danger': isVerified === false,
           }"
           style="cursor: auto"
         >
@@ -122,7 +122,8 @@ export default defineComponent({
     watch(
       credential,
       async () => {
-        isVerified.value = (await verifyBBS(credential.value)).verified;
+        if (credential.value !== "Credential loading.")
+          isVerified.value = (await verifyBBS(credential.value)).verified;
       },
       { immediate: true }
     );
