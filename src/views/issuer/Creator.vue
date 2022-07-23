@@ -113,7 +113,7 @@ export default defineComponent({
     const toast = useToast();
     const { authFetch, sessionInfo } = useSolidSession();
     const { isLoggedIn, webId } = toRefs(sessionInfo);
-    const { wallet, inbox } = useSolidProfile();
+    const { wallet } = useSolidProfile();
     const isLoading = ref(false);
     const rerender = ref(false);
 
@@ -256,15 +256,28 @@ export default defineComponent({
         "Content-type": "application/ld+json",
       });
       // store the credential as issued credential in own Pod
-      const issuerPost = postResource(inbox.value, JSON.stringify(signedCred), fetch, {
-        "Content-type": "application/ld+json",
-      });
+      const issuerPost = postResource(
+        wallet.value,
+        JSON.stringify(signedCred),
+        authFetch.value,
+        {
+          "Content-type": "application/ld+json",
+        }
+      );
       Promise.all([csPost, issuerPost])
         .then(() =>
           toast.add({
             severity: "success",
             summary: "Success!",
             detail: `Credential has been issued.`,
+            life: 5000,
+          })
+        )
+        .catch((err) =>
+          toast.add({
+            severity: "error",
+            summary: "Error on request!",
+            detail: err,
             life: 5000,
           })
         )
