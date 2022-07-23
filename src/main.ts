@@ -18,6 +18,7 @@ import SpeedDial from "primevue/speeddial";
 import Toast from "primevue/toast";
 import ProgressBar from "primevue/progressbar";
 import Listbox from "primevue/listbox";
+import TabMenu from "primevue/tabmenu";
 
 import Menu from 'primevue/menu';
 
@@ -53,6 +54,7 @@ app.component("SpeedDial", SpeedDial);
 app.component("Toast", Toast);
 app.component("ProgressBar", ProgressBar);
 app.component("Listbox", Listbox);
+app.component("TabMenu", TabMenu);
 app.component("Menu", Menu);
 
 app.component("Divider", Divider);
