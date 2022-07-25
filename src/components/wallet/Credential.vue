@@ -15,13 +15,13 @@
           </div>
           <Divider />
         </div>
-        <div
+        <Button
           class="p-button p-button-outlined p-button-rounded"
           :class="{
             'p-button-warning': isVerified === undefined,
             'p-button-danger': isVerified === false,
           }"
-          style="cursor: auto"
+          @click="verify"
         >
           <span class="mr-2">Signature</span>
           <i
@@ -32,7 +32,7 @@
               'pi-spin': isVerified === undefined,
             }"
           />
-        </div>
+        </Button>
       </div>
       <div class="cred-text">
         <span v-if="!error">
@@ -68,7 +68,7 @@
 <script lang="ts">
 import { useSolidSession } from "@/composables/useSolidSession";
 import { deleteResource, getResource, postResource } from "@/lib/solidRequests";
-import { defineComponent, ref, watch } from "vue";
+import { defineComponent, ref, toRefs, watch } from "vue";
 import { useCache } from "@/composables/useCache";
 import { verifyBBS } from "@/lib/bbs";
 export default defineComponent({
@@ -78,9 +78,10 @@ export default defineComponent({
     uri: { default: "" },
     selectFlag: { default: false },
   },
-  emits: ["selectedCredential"],
+  emits: ["selectedCredential", "filterMe"],
   setup(props, context) {
-    const { authFetch } = useSolidSession();
+    const { authFetch, sessionInfo } = useSolidSession();
+    const { isLoggedIn, webId } = toRefs(sessionInfo);
 
     const displayShort = ref(true);
 
@@ -123,13 +124,22 @@ export default defineComponent({
       credential,
       async () => {
         if (credential.value === "Credential loading.") return;
-        const sigCacheName = "sig_" + props.uri
+        if (typeof credential.value === "string") return;
+        // filter
+        const filterMeObj = {
+          uri: props.uri,
+          holding: credential.value["credentialSubject"]["id"] === webId?.value,
+          issued: credential.value["issuer"] === webId?.value,
+        };
+        context.emit("filterMe", filterMeObj);
+        // sig
+        const sigCacheName = "sig_" + props.uri;
         if (cache[sigCacheName]) {
           isVerified.value = cache[sigCacheName];
           return;
         }
         isVerified.value = (await verifyBBS(credential.value)).verified;
-        cache[sigCacheName] = isVerified.value
+        cache[sigCacheName] = isVerified.value;
       },
       { immediate: true }
     );
@@ -150,6 +160,13 @@ export default defineComponent({
       delete cache[uri];
     };
 
+    const verify = async () => {
+      isVerified.value = undefined;
+      const sigCacheName = "sig_" + props.uri;
+      isVerified.value = (await verifyBBS(credential.value)).verified;
+      cache[sigCacheName] = isVerified.value;
+    };
+
     return {
       cred,
       credential,
@@ -161,6 +178,7 @@ export default defineComponent({
       displayShort,
       deleteRes,
       isVerified,
+      verify,
     };
   },
 });
@@ -176,6 +194,7 @@ export default defineComponent({
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: "Courier New", Courier, monospace;
+  margin-right: 10px;
 }
 .cred-text {
   white-space: pre-line;

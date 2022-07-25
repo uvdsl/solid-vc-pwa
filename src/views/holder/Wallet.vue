@@ -7,8 +7,7 @@
         id="walletTabMenu"
       />
       <div style="height: 50px" />
-      <Credentials v-if="isLoggedIn && activeIndex === 0" />
-      <div v-else>Coming soon. For now everything in "Holding".</div>
+      <Credentials v-if="isLoggedIn" :credentialFiltering="credFilter" />
     </div>
   </div>
   <div>
@@ -27,7 +26,7 @@ import Credentials from "@/components/wallet/Credentials.vue";
 import { useSolidSession } from "@/composables/useSolidSession";
 import router from "@/router";
 
-import { defineComponent, ref, toRefs } from "vue";
+import { computed, defineComponent, ref, toRefs } from "vue";
 
 export default defineComponent({
   name: "Wallet",
@@ -36,6 +35,16 @@ export default defineComponent({
     const { sessionInfo } = useSolidSession();
     const { isLoggedIn } = toRefs(sessionInfo);
     const activeIndex = ref(0);
+    const credFilter = computed(() => {
+      switch (activeIndex.value) {
+        case 0:
+          return "holding";
+        case 1:
+          return "issued";
+        default:
+          return "";
+      }
+    });
 
     const menuItems = [
       { label: "Holding", icon: "pi pi-fw pi-wallet" },
@@ -50,7 +59,7 @@ export default defineComponent({
       },
     ];
 
-    return { isLoggedIn, speedDialActions, activeIndex, menuItems };
+    return { isLoggedIn, speedDialActions, activeIndex, menuItems, credFilter };
   },
 });
 </script>
