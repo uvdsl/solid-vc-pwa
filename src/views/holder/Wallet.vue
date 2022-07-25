@@ -5,7 +5,6 @@
         :model="menuItems"
         v-model:activeIndex="activeIndex"
         id="walletTabMenu"
-        class="justify-content-center"
       />
       <div style="height: 50px" />
       <Credentials v-if="isLoggedIn" :credentialFiltering="credFilter" />
@@ -80,7 +79,12 @@ export default defineComponent({
     -webkit-flex: 1;
     flex: 1;
   }
+  .p-menuitem-link {
+    display: flex;
+    justify-content: center;
+  }
 }
+
 #walletTabMenu {
   position: fixed;
   top: 75px;
