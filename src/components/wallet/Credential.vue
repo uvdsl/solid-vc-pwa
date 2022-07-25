@@ -163,7 +163,7 @@ export default defineComponent({
     const verifyStatus = async () => {
       const statusCacheName = "status_" + props.uri;
       isNotRevoked.value = undefined;
-      if (credential.value["status"]) {
+      if (credential.value["credentialStatus"]) {
         isNotRevoked.value = false;
       }
       cache[statusCacheName] = isNotRevoked.value;
