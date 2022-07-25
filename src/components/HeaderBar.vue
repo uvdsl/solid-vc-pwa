@@ -36,6 +36,7 @@
       <LogoutButton v-else />
     </template>
   </Toolbar>
+  <div style="height: 75px" />
 </template>
 
 <script lang="ts">
@@ -109,7 +110,7 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .p-toolbar {
-  position: sticky;
+  position: fixed;
   top: 0;
   right: 0;
   left: 0;
