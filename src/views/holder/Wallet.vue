@@ -5,6 +5,7 @@
         :model="menuItems"
         v-model:activeIndex="activeIndex"
         id="walletTabMenu"
+        class="justify-content-center"
       />
       <div style="height: 50px" />
       <Credentials v-if="isLoggedIn" :credentialFiltering="credFilter" />
