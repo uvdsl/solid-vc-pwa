@@ -96,12 +96,12 @@ export default defineComponent({
   opacity: 0;
   // transform: translateY(-30px);
   // transform: translateX(-100%);
-  transform: translateY(-100vh);
+  transform: translateX(-100vh);
 }
 .list-leave-to {
   opacity: 0;
   // transform: translateX(100vh);
-  transform: translateY(100vh);
+  transform: translateX(100vh);
 }
 .list-leave-active {
   position: fixed;
