@@ -122,8 +122,14 @@ export default defineComponent({
     watch(
       credential,
       async () => {
-        if (credential.value !== "Credential loading.")
-          isVerified.value = (await verifyBBS(credential.value)).verified;
+        if (credential.value === "Credential loading.") return;
+        const sigCacheName = "sig_" + props.uri
+        if (cache[sigCacheName]) {
+          isVerified.value = cache[sigCacheName];
+          return;
+        }
+        isVerified.value = (await verifyBBS(credential.value)).verified;
+        cache[sigCacheName] = isVerified.value
       },
       { immediate: true }
     );
