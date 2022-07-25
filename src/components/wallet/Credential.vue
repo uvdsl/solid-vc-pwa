@@ -1,29 +1,65 @@
 <template>
   <Card class="mt-2 mb-2" :class="{ highlight: isSelected }" @click="select">
     <template #content>
-      <div
-        class="
-          flex
-          justify-content-end
-          sm:justify-content-between
-          align-items-start
-        "
-      >
-        <div class="hidden sm:inline-block">
-          <div class="text-primary uri-text">
-            {{ uri }}
-          </div>
-          <Divider />
+      <div class="hidden sm:inline-block">
+        <div class="text-primary uri-text">
+          {{ uri }}
         </div>
+        <Divider />
+      </div>
+      <div class="flex flex-wrap justify-content-end mb-2">
         <Button
+          v-tooltip.bottom="
+            isNotRevoked
+              ? 'Status ok'
+              : isNotRevoked === false
+              ? 'Revoked!'
+              : 'Not revokable.'
+          "
+          class="p-button p-button-outlined p-button-rounded mr-2"
+          :class="{
+            'p-button-warning': isNotRevoked === undefined,
+            'p-button-danger': isNotRevoked === false,
+          }"
+          @click="verifyStatus"
+        >
+          <span v-if="isNotRevoked === false" class="mr-2">Status</span>
+          <i class="pi pi-flag-fill" />
+        </Button>
+        <Button
+          v-tooltip.bottom="
+            isNotExpired
+              ? 'Not yet expired.'
+              : isNotExpired === false
+              ? 'Expired!'
+              : 'Does not expire.'
+          "
+          class="p-button p-button-outlined p-button-rounded mr-2"
+          :class="{
+            'p-button-warning': isNotExpired === undefined,
+            'p-button-danger': isNotExpired === false,
+          }"
+          @click="verifyExp"
+        >
+          <span v-if="isNotExpired === false" class="mr-2">Expired</span>
+          <i
+            class="pi"
+            :class="{
+              'pi-clock': isNotExpired,
+              'pi-history': !isNotExpired,
+            }"
+          />
+        </Button>
+        <Button
+          v-tooltip.bottom="isVerified ? 'Verified!' : 'Invalid!'"
           class="p-button p-button-outlined p-button-rounded"
           :class="{
             'p-button-warning': isVerified === undefined,
             'p-button-danger': isVerified === false,
           }"
-          @click="verify"
+          @click="verifySig"
         >
-          <span class="mr-2">Signature</span>
+          <span v-if="isVerified === false" class="mr-2">Signature</span>
           <i
             :class="{
               pi: true,
@@ -100,10 +136,38 @@ export default defineComponent({
     const displayShort = ref(true);
 
     let cred = ref("Credential loading.");
-    let credential = ref("Credential loading.");
+    let credential = ref("Credential loading." as any);
     let contentType = ref();
     let error = ref();
+
     const isVerified = ref();
+    const verifySig = async () => {
+      const sigCacheName = "sig_" + props.uri;
+      isVerified.value = undefined;
+      isVerified.value = (await verifyBBS(credential.value)).verified;
+      cache[sigCacheName] = isVerified.value;
+    };
+
+    const isNotExpired = ref();
+    const verifyExp = async () => {
+      const expCacheName = "exp_" + props.uri;
+      isNotExpired.value = undefined;
+      if (credential.value["expirationDate"]) {
+        isNotExpired.value =
+          new Date(credential.value["expirationDate"]) >= new Date();
+      }
+      cache[expCacheName] = isNotExpired.value;
+    };
+
+    const isNotRevoked = ref();
+    const verifyStatus = async () => {
+      const statusCacheName = "status_" + props.uri;
+      isNotRevoked.value = undefined;
+      if (credential.value["status"]) {
+        isNotRevoked.value = false;
+      }
+      cache[statusCacheName] = isNotRevoked.value;
+    };
 
     const cache = useCache();
 
@@ -148,12 +212,16 @@ export default defineComponent({
         context.emit("filterMe", filterMeObj);
         // sig
         const sigCacheName = "sig_" + props.uri;
-        if (cache[sigCacheName]) {
-          isVerified.value = cache[sigCacheName];
-          return;
-        }
-        isVerified.value = (await verifyBBS(credential.value)).verified;
-        cache[sigCacheName] = isVerified.value;
+        if (!cache[sigCacheName]) verifySig();
+        isVerified.value = cache[sigCacheName];
+        // exp
+        const expCacheName = "exp_" + props.uri;
+        if (!cache[expCacheName]) verifyExp();
+        isNotExpired.value = cache[expCacheName];
+        // status
+        const statusCacheName = "status_" + props.uri;
+        if (!cache[statusCacheName]) verifyStatus();
+        isNotRevoked.value = cache[statusCacheName];
       },
       { immediate: true }
     );
@@ -174,13 +242,6 @@ export default defineComponent({
       delete cache[uri];
     };
 
-    const verify = async () => {
-      isVerified.value = undefined;
-      const sigCacheName = "sig_" + props.uri;
-      isVerified.value = (await verifyBBS(credential.value)).verified;
-      cache[sigCacheName] = isVerified.value;
-    };
-
     return {
       cred,
       credential,
@@ -192,7 +253,11 @@ export default defineComponent({
       displayShort,
       deleteRes,
       isVerified,
-      verify,
+      isNotRevoked,
+      isNotExpired,
+      verifySig,
+      verifyExp,
+      verifyStatus,
     };
   },
 });
