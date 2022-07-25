@@ -118,7 +118,7 @@ export default defineComponent({
     const rerender = ref(false);
 
     // content of the information resource
-
+    const issueDate = new Date();
     const defaultCredential = ref({
       "@context": [
         "https://www.w3.org/2018/credentials/v1",
@@ -128,7 +128,10 @@ export default defineComponent({
       id: "https://example.org/cred#1656534443782",
       type: "VerifiableCredential",
       issuer: webId?.value,
-      issuanceDate: new Date().toISOString(),
+      issuanceDate: issueDate.toISOString(),
+      expirationDate: new Date(
+        issueDate.getTime() + 365 *  24 * 60 * 60 * 1000
+      ).toISOString(),
       description:
         "An example credential, self-issued to assert: I am a Person.",
       credentialSubject: {
