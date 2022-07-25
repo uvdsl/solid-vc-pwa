@@ -36,7 +36,21 @@
       </div>
       <div class="cred-text">
         <span v-if="!error">
-          <pre>{{ displayShort ? cred : credential }}</pre>
+          <div v-if="typeof cred !== 'string' && displayShort">
+            <div
+              v-for="e in Object.entries(cred)"
+              :key="e[0]"
+              style="margin: 15px"
+            >
+              <b>
+                {{ e[0] }}
+              </b>
+              <div style="margin-left: 15px">
+                {{ e[1] }}
+              </div>
+            </div>
+          </div>
+          <pre v-else>{{ credential }}</pre>
         </span>
         <span v-else style="color: red">
           {{ error }}
