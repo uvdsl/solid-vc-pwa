@@ -96,7 +96,13 @@
 <script lang="ts">
 import { useToast } from "primevue/usetoast";
 import { useSolidSession } from "@/composables/useSolidSession";
-import { getResource, parseToN3, postResource } from "@/lib/solidRequests";
+import {
+  createResource,
+  getLocationHeader,
+  getResource,
+  parseToN3,
+  postResource,
+} from "@/lib/solidRequests";
 import { computed, defineComponent, reactive, ref, toRefs, watch } from "vue";
 import KeyDialog from "@/components/keys/KeyDialog.vue";
 import JsonObjectCreator from "@/components/creator/JsonObjectCreator.vue";
@@ -268,6 +274,24 @@ export default defineComponent({
     const issueCred = async (key: Bls12381G2KeyPair) => {
       displayKeyDialog.value = false;
       isLoading.value = true;
+      // create credential status information
+      const svcs = "https://uvdsl.solid.aifb.kit.edu/ontology/svcs-context";
+      const credstat = {
+        "@context": [svcs],
+        id: "#status",
+        type: "svcs:CredentialStatusInformation",
+        currentStatus: "svcs:Issued",
+      };
+      const statusLocation = await createResource(
+        credStatusDir.value,
+        JSON.stringify(credstat),
+        authFetch.value,
+        { "Content-type": "application/ld+json" }
+      )
+        .then(getLocationHeader)
+      defaultCredential.value["credentialStatus"] = statusLocation + "#status";
+
+      // sign Credential
       const signedCred = await signBBS(defaultCredential.value, key);
       // send to CredentialSubject's inbox
       const csWebId = defaultCredential.value.credentialSubject.id as string;

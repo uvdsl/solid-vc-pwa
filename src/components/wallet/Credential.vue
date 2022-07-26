@@ -164,7 +164,28 @@ export default defineComponent({
       const statusCacheName = "status_" + props.uri;
       isNotRevoked.value = undefined;
       if (credential.value["credentialStatus"]) {
-        isNotRevoked.value = false;
+        isNotRevoked.value = await getResource(
+          credential.value["credentialStatus"]
+        )
+          .then((resp) =>
+            resp.text().then((txt) => {
+              contentType.value = resp.headers.get("Content-type");
+              switch (contentType.value) {
+                case "application/ld+json":
+                  const statusInfo = JSON.parse(txt);
+                  return (
+                    statusInfo["currentStatus"] === "svcs:Issued" ||
+                    statusInfo["currentStatus"] ===
+                      "https://purl.org/solid-vc/credentialStatus#Issued"
+                  ); // Hacky non-RDF. fuck json-ld.
+                  break; // would be nice to always convert to rdf and then query. smh.
+                case "text/turtle":
+                  // do stuff
+                  break;
+              }
+            })
+          )
+          .catch(() => false);
       }
       cache[statusCacheName] = isNotRevoked.value;
     };

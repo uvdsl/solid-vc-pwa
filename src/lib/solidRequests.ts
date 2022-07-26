@@ -140,14 +140,20 @@ export async function postResource(
 export async function createResource(
   locationURI: string,
   body: string,
-  fetch?: (url: RequestInfo, init?: RequestInit) => Promise<Response>
+  fetch?: (url: RequestInfo, init?: RequestInit) => Promise<Response>,
+  headers?: Record<string, string>
 ): Promise<Response> {
   console.log("### SoLiD\t| CREATE RESOURCE AT\n" + locationURI);
+  if (!headers) headers = {};
+  headers["Content-type"] = headers["Content-type"]
+    ? headers["Content-type"]
+    : "text/turtle";
+  headers["Link"] = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
   return postResource(
     locationURI,
     body,
     fetch,
-    { Link: '<http://www.w3.org/ns/ldp#Resource>; rel="type"' },
+    headers,
   ).then(_checkResponseStatus);
 }
 
@@ -259,7 +265,7 @@ export async function patchResource(
   if (fetch === undefined) fetch = window.fetch;
   return fetch(uri, {
     method: "PATCH",
-    headers: {"Content-Type":"text/n3"},
+    headers: { "Content-Type": "text/n3" },
     body: body,
   }).then(_checkResponseStatus);
 }
