@@ -3,7 +3,7 @@
   <div v-if="obj !== Object(obj)" class="val">
     <div v-if="!isInArray" class="val-label">{{ label }}</div>
     <div class="p-inputgroup">
-      <InputText v-model="val" />
+      <InputText v-model="val" :disabled="label === 'credentialStatus'" />
       <Button
         :disabled="label === 'id'"
         :style="{ visibility: label === 'id' ? 'hidden' : 'visible' }"
@@ -176,26 +176,35 @@ export default defineComponent({
     const toggleValueMenu = (event: Event) => {
       menuValue.value.toggle(event);
     };
-    const items = ref([
-      {
-        label: "Convert to array",
-        icon: "pi pi-list",
-        command: toArray,
-      },
-      {
-        label: "Convert to object",
-        icon: "pi pi-sitemap",
-        command: toObject,
-      },
-      {
-        separator: true,
-      },
-      {
-        label: "Delete",
-        icon: "pi pi-times",
-        command: deleteValue,
-      },
-    ]);
+    const items = ref(
+      [
+        // @ts-ignore
+        !["credentialStatus", "expirationDate"].includes(props.label)
+          ? [
+              {
+                label: "Convert to array",
+                icon: "pi pi-list",
+                command: toArray,
+              },
+              {
+                label: "Convert to object",
+                icon: "pi pi-sitemap",
+                command: toObject,
+              },
+              {
+                separator: true,
+              },
+            ]
+          : undefined,
+        {
+          label: "Delete",
+          icon: "pi pi-times",
+          command: deleteValue,
+        },
+      ]
+        .flat()
+        .filter((e) => e)
+    );
 
     return {
       rerender,

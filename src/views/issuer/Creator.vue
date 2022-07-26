@@ -113,12 +113,13 @@ export default defineComponent({
     const toast = useToast();
     const { authFetch, sessionInfo } = useSolidSession();
     const { isLoggedIn, webId } = toRefs(sessionInfo);
-    const { wallet } = useSolidProfile();
+    const { wallet, credStatusDir } = useSolidProfile();
     const isLoading = ref(false);
     const rerender = ref(false);
 
     // content of the information resource
     const issueDate = new Date();
+    const credStatus = computed(() => credStatusDir.value + "{{slug}}#status");
     const defaultCredential = ref({
       "@context": [
         "https://www.w3.org/2018/credentials/v1",
@@ -127,14 +128,14 @@ export default defineComponent({
       ],
       id: "https://example.org/cred#1656534443782",
       type: "VerifiableCredential",
+      description:
+        "An example credential, self-issued to assert: I am a Person.",
       issuer: webId?.value,
       issuanceDate: issueDate.toISOString(),
       expirationDate: new Date(
         issueDate.getTime() + 365 * 24 * 60 * 60 * 1000
       ).toISOString(),
-      credentialStatus: "",
-      description:
-        "An example credential, self-issued to assert: I am a Person.",
+      credentialStatus: credStatus.value,
       credentialSubject: {
         id: webId?.value,
         type: ["Person"],
@@ -188,6 +189,8 @@ export default defineComponent({
           detail: "This credential will not be revokable.",
           life: 5000,
         });
+      } else {
+        cred.value["credentialStatus"] = credStatus.value;
       }
     });
 
