@@ -130,8 +130,9 @@ export default defineComponent({
       issuer: webId?.value,
       issuanceDate: issueDate.toISOString(),
       expirationDate: new Date(
-        issueDate.getTime() + 365 *  24 * 60 * 60 * 1000
+        issueDate.getTime() + 365 * 24 * 60 * 60 * 1000
       ).toISOString(),
+      credentialStatus: "",
       description:
         "An example credential, self-issued to assert: I am a Person.",
       credentialSubject: {
@@ -164,11 +165,29 @@ export default defineComponent({
       if (!Object.keys(claims.value).includes("type")) {
         toast.add({
           severity: "warn",
-          summary: "Just saying:",
+          summary: "Missing `type`",
           detail: "CredentialSubject MUST have an `type`.",
           life: 5000,
         });
         return;
+      }
+    });
+    watch(cred.value, () => {
+      if (!Object.keys(cred.value).includes("expirationDate")) {
+        toast.add({
+          severity: "info",
+          summary: "No `expirationDate`",
+          detail: "This credential will not expire.",
+          life: 5000,
+        });
+      }
+      if (!Object.keys(cred.value).includes("credentialStatus")) {
+        toast.add({
+          severity: "info",
+          summary: "No `credentialStatus`",
+          detail: "This credential will not be revokable.",
+          life: 5000,
+        });
       }
     });
 
