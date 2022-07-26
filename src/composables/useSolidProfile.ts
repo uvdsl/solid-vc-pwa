@@ -30,8 +30,9 @@ watch(() => sessionInfo.webId, async () => {
   storage.value = query.length > 0 ? query[0].value : "";
 })
 
-const wallet = computed(() => storage.value !== "" ? `${storage.value}wallet/`: "");
+const wallet = computed(() => storage.value !== "" ? `${storage.value}wallet/` : "");
+const credStatusDir = computed(() => storage.value !== "" ? `${storage.value}credentialStatus/` : "");
 
 export const useSolidProfile = () => {
-  return { name, img, inbox, storage, wallet };
+  return { name, img, inbox, storage, wallet, credStatusDir };
 };

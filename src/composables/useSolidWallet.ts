@@ -1,14 +1,14 @@
 import { ref, watch } from "vue";
 import { useSolidSession } from "./useSolidSession";
 import { useSolidProfile } from "./useSolidProfile";
-import { createContainer, getContainerItems } from "@/lib/solidRequests";
+import { createContainer, getContainerItems, getResource, putResource } from "@/lib/solidRequests";
 
 let socket: WebSocket;
 
-const { authFetch } = useSolidSession();
+const { authFetch, sessionInfo } = useSolidSession();
 
 const creds = ref([] as String[]);
-const { wallet } = useSolidProfile();
+const { wallet, credStatusDir } = useSolidProfile();
 
 const update = async (uri: string) => {
     return getContainerItems(wallet.value, authFetch.value)
@@ -60,6 +60,49 @@ const updateSubscription = () => {
 watch(() => wallet.value, updateSubscription);
 
 
+
+// make sure that credential status directory exists
+watch(credStatusDir, () => {
+    if (credStatusDir.value === "") return;
+    getResource(credStatusDir.value, authFetch.value)
+        .catch((err) => {
+            // make sure credStatus directory exists
+            if (err.message.includes("`404`")) {
+                console.log("Credential Status directory not found, creating it now.")
+                return createContainer(
+                    `${credStatusDir.value.split("credentialStatus/")[0]}`,
+                    "credentialStatus",
+                    authFetch.value
+                ).then(() => {
+                    const acl = `
+  @prefix acl: <http://www.w3.org/ns/auth/acl#>.
+  @prefix foaf: <http://xmlns.com/foaf/0.1/>.
+  
+  <#owner>
+      a acl:Authorization;
+      acl:agent
+          <${sessionInfo.webId}>;
+  
+      acl:accessTo <./>;
+      acl:default <./>;
+  
+      acl:mode
+          acl:Read, acl:Write, acl:Control.
+  
+  # Public read access for container items
+  <#public>
+      a acl:Authorization;
+      acl:agentClass foaf:Agent;  # everyone
+      acl:default <./>;
+      acl:mode acl:Read.
+  `
+                    return putResource(credStatusDir.value + ".acl", acl, authFetch.value)
+                }).catch(err => console.log(err))
+            }
+            return err;
+        });
+
+}, { immediate: true })
 
 
 
