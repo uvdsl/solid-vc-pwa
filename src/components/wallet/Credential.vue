@@ -101,7 +101,7 @@
         <Button
           v-if="displayShort"
           icon="pi  pi-angle-double-down"
-          class="p-button-text p-button-rounded p-button-raised p-button-info"
+          class="p-button-text p-button-rounded p-button-raised p-button-secondary"
           @click="displayShort = false"
         />
         <Button
@@ -109,6 +109,17 @@
           icon="pi  pi-angle-double-up"
           class="p-button-text p-button-rounded p-button-raised p-button-info"
           @click="displayShort = true"
+        />
+         <Button
+         v-if="isRevokable"
+          icon="pi pi-file-excel"
+          class="p-button-text p-button-rounded p-button-raised p-button-warning"
+        />
+         <Button
+          v-else
+          disabled
+          icon=""
+          class="p-button-rounded p-button-text"
         />
       </div>
     </template>
@@ -139,6 +150,8 @@ export default defineComponent({
     let credential = ref("Credential loading." as any);
     let contentType = ref();
     let error = ref();
+
+    const isRevokable = ref(false);
 
     const isVerified = ref();
     const verifySig = async () => {
@@ -230,6 +243,9 @@ export default defineComponent({
           holding: credential.value["credentialSubject"]["id"] === webId?.value,
           issued: credential.value["issuer"] === webId?.value,
         };
+        isRevokable.value =
+          credential.value["issuer"] === webId?.value &&
+          credential.value["credentialStatus"];
         context.emit("filterMe", filterMeObj);
         // sig
         const sigCacheName = "sig_" + props.uri;
@@ -279,6 +295,7 @@ export default defineComponent({
       verifySig,
       verifyExp,
       verifyStatus,
+      isRevokable,
     };
   },
 });
