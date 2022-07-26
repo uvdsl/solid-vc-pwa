@@ -14,6 +14,7 @@ import InputText from "primevue/inputtext";
 // import RadioButton from 'primevue/radiobutton';
 import Textarea from "primevue/textarea";
 import Dialog from "primevue/dialog";
+import Dropdown from 'primevue/dropdown';
 import SpeedDial from "primevue/speeddial";
 import Toast from "primevue/toast";
 import ProgressBar from "primevue/progressbar";
@@ -50,6 +51,7 @@ app.component("InputText", InputText);
 // app.component("RadioButton", RadioButton)
 app.component("Textarea", Textarea);
 app.component("Dialog", Dialog);
+app.component("Dropdown", Dropdown);
 app.component("SpeedDial", SpeedDial);
 app.component("Toast", Toast);
 app.component("ProgressBar", ProgressBar);

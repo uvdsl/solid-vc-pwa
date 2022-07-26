@@ -101,7 +101,9 @@
         <Button
           v-if="displayShort"
           icon="pi  pi-angle-double-down"
-          class="p-button-text p-button-rounded p-button-raised p-button-secondary"
+          class="
+            p-button-text p-button-rounded p-button-raised p-button-secondary
+          "
           @click="displayShort = false"
         />
         <Button
@@ -110,18 +112,28 @@
           class="p-button-text p-button-rounded p-button-raised p-button-info"
           @click="displayShort = true"
         />
-         <Button
-         v-if="isRevokable"
+        <Button
+          v-if="isRevokable"
           icon="pi pi-file-excel"
-          class="p-button-text p-button-rounded p-button-raised p-button-warning"
+          class="
+            p-button-text p-button-rounded p-button-raised p-button-warning
+          "
+          @click="showCredStatusDialog = true"
         />
-         <Button
+        <Button
           v-else
           disabled
           icon=""
           class="p-button-rounded p-button-text"
         />
       </div>
+      <CredStatusDialog
+        :display="showCredStatusDialog"
+        :status="currentStatus"
+        :reason="statusReason"
+        @setStatusInfo="setCredStatusInfo"
+        @hide="showCredStatusDialog = false"
+      />
     </template>
   </Card>
 </template>
@@ -130,11 +142,12 @@
 import { useSolidSession } from "@/composables/useSolidSession";
 import { deleteResource, getResource, postResource } from "@/lib/solidRequests";
 import { defineComponent, ref, toRefs, watch } from "vue";
+import CredStatusDialog from "@/components/wallet/CredStatusDialog.vue";
 import { useCache } from "@/composables/useCache";
 import { verifyBBS } from "@/lib/bbs";
 export default defineComponent({
   name: "Credential",
-  components: {},
+  components: { CredStatusDialog },
   props: {
     uri: { default: "" },
     selectFlag: { default: false },
@@ -173,6 +186,8 @@ export default defineComponent({
     };
 
     const isNotRevoked = ref();
+    const currentStatus = ref();
+    const statusReason = ref();
     const verifyStatus = async () => {
       const statusCacheName = "status_" + props.uri;
       isNotRevoked.value = undefined;
@@ -186,6 +201,8 @@ export default defineComponent({
               switch (contentType.value) {
                 case "application/ld+json":
                   const statusInfo = JSON.parse(txt);
+                  currentStatus.value = statusInfo["currentStatus"];
+                  statusReason.value = statusInfo["statusReason"];
                   return (
                     statusInfo["currentStatus"] === "svcs:Issued" ||
                     statusInfo["currentStatus"] ===
@@ -279,6 +296,15 @@ export default defineComponent({
       delete cache[uri];
     };
 
+    const showCredStatusDialog = ref(false);
+    const setCredStatusInfo = (statusInfo: {
+      currentStatus: string;
+      statusReason: string;
+    }) => {
+      console.log(statusInfo);
+      // TODO Patch credential status with the new status information
+    };
+
     return {
       cred,
       credential,
@@ -296,6 +322,10 @@ export default defineComponent({
       verifyExp,
       verifyStatus,
       isRevokable,
+      showCredStatusDialog,
+      setCredStatusInfo,
+      currentStatus,
+      statusReason,
     };
   },
 });
