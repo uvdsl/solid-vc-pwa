@@ -1,5 +1,10 @@
 <template>
-  <Card class="mt-2 mb-2" :class="{ highlight: isSelected }" @click="select">
+  <Card
+    class="mt-2 mb-2"
+    :class="{ highlight: isSelected }"
+    @click="select"
+    style="width: 100%"
+  >
     <template #content>
       <div class="hidden sm:inline-block">
         <div class="text-primary uri-text">
@@ -13,7 +18,7 @@
             isNotRevoked
               ? 'Status ok'
               : isNotRevoked === false
-              ? 'Revoked!'
+              ? statusComment
               : 'Not revokable.'
           "
           class="p-button p-button-outlined p-button-rounded mr-2"
@@ -129,8 +134,7 @@
       </div>
       <CredStatusDialog
         :display="showCredStatusDialog"
-        :status="currentStatus"
-        :reason="statusReason"
+        :statusInfo="credStatusInfo"
         @setStatusInfo="setCredStatusInfo"
         @hide="showCredStatusDialog = false"
       />
@@ -140,11 +144,19 @@
 
 <script lang="ts">
 import { useSolidSession } from "@/composables/useSolidSession";
-import { deleteResource, getResource, postResource } from "@/lib/solidRequests";
-import { defineComponent, ref, toRefs, watch } from "vue";
+import {
+  deleteResource,
+  getResource,
+  parseToN3,
+  patchResource,
+  postResource,
+  putResource,
+} from "@/lib/solidRequests";
+import { computed, defineComponent, reactive, ref, toRefs, watch } from "vue";
 import CredStatusDialog from "@/components/wallet/CredStatusDialog.vue";
 import { useCache } from "@/composables/useCache";
 import { verifyBBS } from "@/lib/bbs";
+import { SVCS } from "@/lib/namespaces";
 export default defineComponent({
   name: "Credential",
   components: { CredStatusDialog },
@@ -186,8 +198,7 @@ export default defineComponent({
     };
 
     const isNotRevoked = ref();
-    const currentStatus = ref();
-    const statusReason = ref();
+    const credStatusInfo = reactive({} as any);
     const verifyStatus = async () => {
       const statusCacheName = "status_" + props.uri;
       isNotRevoked.value = undefined;
@@ -200,17 +211,21 @@ export default defineComponent({
               contentType.value = resp.headers.get("Content-type");
               switch (contentType.value) {
                 case "application/ld+json":
-                  const statusInfo = JSON.parse(txt);
-                  currentStatus.value = statusInfo["currentStatus"];
-                  statusReason.value = statusInfo["statusReason"];
+                  Object.assign(credStatusInfo, JSON.parse(txt));
                   return (
-                    statusInfo["currentStatus"] === "svcs:Issued" ||
-                    statusInfo["currentStatus"] ===
-                      "https://purl.org/solid-vc/credentialStatus#Issued"
+                    credStatusInfo["currentStatus"] === "svcs:Issued" ||
+                    credStatusInfo["currentStatus"] === SVCS("Issued")
                   ); // Hacky non-RDF. fuck json-ld.
                   break; // would be nice to always convert to rdf and then query. smh.
                 case "text/turtle":
                   // do stuff
+                  parseToN3(txt, props.uri)
+                    .then((parsedN3) => parsedN3.store)
+                    .then((store) => {
+                      // statusId.value = statusInfo["id"];
+                      // currentStatus.value = statusInfo["currentStatus"];
+                      // statusReason.value = statusInfo["statusReason"];
+                    });
                   break;
               }
             })
@@ -297,13 +312,78 @@ export default defineComponent({
     };
 
     const showCredStatusDialog = ref(false);
-    const setCredStatusInfo = (statusInfo: {
+    const setCredStatusInfo = async (statusInfo: {
       currentStatus: string;
       statusReason: string;
     }) => {
-      console.log(statusInfo);
+      const statusVal = credStatusInfo["currentStatus"].startsWith("svcs:") // hacky because non-RDF
+        ? SVCS(credStatusInfo["currentStatus"].split("svcs:")[1])
+        : credStatusInfo["currentStatus"];
+      const oldStatusTriple = `
+                                <${credStatusInfo["id"]}> 
+                                <${SVCS("currentStatus")}> 
+                                <${statusVal}>. `;
+      const newStatusTriple = `
+                                <${credStatusInfo["id"]}> 
+                                <${SVCS("currentStatus")}>
+                                ${statusInfo.currentStatus} . `;
+      const oldReasonTriple = `
+                                <${credStatusInfo["id"]}> 
+                                <${SVCS("statusReason")}>
+                                "${credStatusInfo["statusReason"]}".`;
+      const newReasonTriple = `
+                                <${credStatusInfo["id"]}> 
+                                <${SVCS("statusReason")}>
+                                "${statusInfo.statusReason}".`;
       // TODO Patch credential status with the new status information
+      const patch = `
+       @prefix solid: <http://www.w3.org/ns/solid/terms#>. 
+       @prefix svcs: <${SVCS("")}>.
+       _:rename a solid:InsertDeletePatch; 
+                solid:deletes { 
+                  ${oldStatusTriple} 
+                  ${credStatusInfo["statusReason"] ? oldReasonTriple : ""} 
+                };
+                solid:inserts { 
+                  ${newStatusTriple} 
+                  ${statusInfo.statusReason ? newReasonTriple : ""} 
+                }.
+      `;
+      // await patchResource(
+      //   credential.value["credentialStatus"],
+      //   patch,
+      //   authFetch.value
+      // );
+      // FYI dos not work on JSON-LD files apparently ...
+
+      credStatusInfo["currentStatus"] = statusInfo.currentStatus;
+      credStatusInfo["statusReason"] = statusInfo.statusReason;
+      await putResource(
+        credential.value["credentialStatus"],
+        JSON.stringify(credStatusInfo),
+        authFetch.value,
+        { "Content-type": "application/ld+json" }
+      ).then(() => verifyStatus());
     };
+
+    const statusComment = computed(() => {
+      let status = "";
+      switch (credStatusInfo.currentStatus) {
+        case "svcs:Suspended":
+        case SVCS("Suspended"):
+          status = "Suspended";
+          break;
+        case "svcs:Revoked":
+        case SVCS("Revoked"):
+          status = "Revoked";
+          break;
+        default:
+          status = "Not ok";
+      }
+      return `${status}! \n(${
+        credStatusInfo.statusReason ? credStatusInfo.statusReason : ""
+      })`;
+    });
 
     return {
       cred,
@@ -324,8 +404,8 @@ export default defineComponent({
       isRevokable,
       showCredStatusDialog,
       setCredStatusInfo,
-      currentStatus,
-      statusReason,
+      credStatusInfo,
+      statusComment,
     };
   },
 });

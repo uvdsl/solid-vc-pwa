@@ -30,19 +30,15 @@ import { defineComponent, reactive, ref, watch } from "vue";
 export default defineComponent({
   name: "CredStatusDialog",
   components: {},
-  props: { display: Boolean, status: String, reason: String },
+  props: { display: Boolean, statusInfo: Object },
   emits: ["setStatusInfo", "hide"],
   setup(props, context) {
     const showCredStatusDialog = ref(false);
-    const newStatusInfo = reactive({
-      currentStatus: props.status,
-      statusReason: props.reason,
-    });
+    const newStatusInfo = reactive({} as any);
     watch(
       () => props.display,
       () => {
-        newStatusInfo.currentStatus = props.status;
-        newStatusInfo.statusReason = props.reason;
+        Object.assign(newStatusInfo, props.statusInfo);
         showCredStatusDialog.value = props.display;
       }
     );
