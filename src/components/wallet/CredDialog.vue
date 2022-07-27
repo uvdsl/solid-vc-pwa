@@ -6,7 +6,7 @@
     @hide="emitHide"
   >
     <div style="background-color: var(--surface-b); padding: 0 5px 0 5px">
-      <Credentials @selectedCredential="selectCred" />
+      <Credentials @selectedCredential="selectCred" credentialFiltering="holding"/>
     </div>
     <template #footer>
       <Button label="Select!" @click="select" style="margin-top: 20px" />
