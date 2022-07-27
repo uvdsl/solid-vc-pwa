@@ -5,8 +5,7 @@
     @click="select"
     style="width: 100%"
   >
-    <template #content
-      >{{ credStatusInfo }}
+    <template #content>
       <div class="hidden sm:inline-block">
         <div class="text-primary uri-text">
           {{ uri }}
