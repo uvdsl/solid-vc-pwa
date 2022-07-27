@@ -5,7 +5,8 @@
     @click="select"
     style="width: 100%"
   >
-    <template #content>
+    <template #content
+      >{{ credStatusInfo }}
       <div class="hidden sm:inline-block">
         <div class="text-primary uri-text">
           {{ uri }}
@@ -201,6 +202,7 @@ export default defineComponent({
     const credStatusInfo = reactive({} as any);
     const verifyStatus = async () => {
       const statusCacheName = "status_" + props.uri;
+      const statusInfoCacheName = "statusInfo_" + props.uri;
       isNotRevoked.value = undefined;
       if (credential.value["credentialStatus"]) {
         isNotRevoked.value = await getResource(
@@ -233,6 +235,7 @@ export default defineComponent({
           .catch(() => false);
       }
       cache[statusCacheName] = isNotRevoked.value;
+      cache[statusInfoCacheName] = credStatusInfo;
     };
 
     const cache = useCache();
@@ -289,8 +292,10 @@ export default defineComponent({
         isNotExpired.value = cache[expCacheName];
         // status
         const statusCacheName = "status_" + props.uri;
+        const statusInfoCacheName = "statusInfo_" + props.uri;
         if (!cache[statusCacheName]) verifyStatus();
         isNotRevoked.value = cache[statusCacheName];
+        Object.assign(credStatusInfo, cache[statusInfoCacheName]);
       },
       { immediate: true }
     );
