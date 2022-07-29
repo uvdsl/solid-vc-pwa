@@ -20,6 +20,8 @@ import Toast from "primevue/toast";
 import ProgressBar from "primevue/progressbar";
 import Listbox from "primevue/listbox";
 import TabMenu from "primevue/tabmenu";
+import ContextMenu from 'primevue/contextmenu';
+
 
 import Menu from 'primevue/menu';
 
@@ -30,6 +32,10 @@ import BadgeDirective from 'primevue/badgedirective';
 import Tooltip from "primevue/tooltip";
 import ToastService from "primevue/toastservice";
 
+import ConfirmDialog from 'primevue/confirmdialog';
+import ConfirmationService from 'primevue/confirmationservice';
+
+
 import "primeflex/primeflex.css"; // layouts
 import "primevue/resources/themes/vela-green/theme.css"; // theme
 import "primevue/resources/primevue.min.css"; // core css
@@ -39,6 +45,7 @@ const app = createApp(App);
 app.use(router);
 app.use(PrimeVue, { ripple: true });
 app.use(ToastService);
+app.use(ConfirmationService);
 
 app.component("Button", Button);
 app.component("Toolbar", Toolbar);
@@ -57,6 +64,8 @@ app.component("Toast", Toast);
 app.component("ProgressBar", ProgressBar);
 app.component("Listbox", Listbox);
 app.component("TabMenu", TabMenu);
+app.component("ContextMenu", ContextMenu);
+app.component("ConfirmDialog", ConfirmDialog);
 app.component("Menu", Menu);
 
 app.component("Divider", Divider);

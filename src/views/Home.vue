@@ -1,6 +1,8 @@
 <template>
   <div class="grid">
     <div class="col lg:col-6 lg:col-offset-3">
+      <Button @click="qr" />
+      <canvas id="canvas" ref="qrcode"></canvas>
       <div class="p-inputgroup">
         <InputText
           placeholder="A URI to do actions on."
@@ -18,14 +20,14 @@
     <div class="col lg:col-6 lg:col-offset-3">
       <Textarea v-model="content" class="sizing" />
     </div>
-  <SpeedDial
-    v-if="isLoggedIn"
-    :model="speedDialActions"
-    type="semi-circle"
-    :radius="75"
-    showIcon="pi pi-ellipsis-h"
-    :tooltipOptions="{ position: 'top' }"
-  />
+    <SpeedDial
+      v-if="isLoggedIn"
+      :model="speedDialActions"
+      type="semi-circle"
+      :radius="75"
+      showIcon="pi pi-ellipsis-h"
+      :tooltipOptions="{ position: 'top' }"
+    />
   </div>
   <CredDialog
     @selectedCredential="selectCred"
@@ -57,6 +59,7 @@ import KeyDialog from "@/components/keys/KeyDialog.vue";
 import router from "@/router";
 import { Bls12381G2KeyPair } from "@mattrglobal/bls12381-key-pair";
 import { signBBS, verifyBBS } from "@/lib/bbs";
+import QRCode from "qrcode";
 
 export default defineComponent({
   name: "Home",
@@ -129,7 +132,7 @@ export default defineComponent({
         icon: "pi pi-wallet",
         command: () => router.push("/wallet/"),
       },
-            {
+      {
         label: "New credential.",
         icon: "pi pi-pencil",
         command: () => router.push("/issue/"),
@@ -216,6 +219,22 @@ export default defineComponent({
         });
     };
 
+    const qrcode = ref();
+    const qr = () => {
+      QRCode.toCanvas(qrcode.value, "sample text", (err) => {
+        // callback, that may have an error as argument
+        if (err)
+          toast.add({
+            severity: "error",
+            summary: "Error on QR-Code!",
+            detail: err,
+            life: 5000,
+          });
+        // no err
+        console.log("success!");
+      });
+    };
+
     return {
       uri,
       fetch,
@@ -230,6 +249,8 @@ export default defineComponent({
       isLoggedIn,
       displayKeyDialog,
       signCred,
+      qrcode,
+      qr,
     };
   },
 });

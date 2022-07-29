@@ -75,33 +75,45 @@
           />
         </Button>
       </div>
-      <div class="cred-text">
-        <span v-if="!error">
-          <div v-if="typeof cred !== 'string' && displayShort">
-            <div
-              v-for="e in Object.entries(cred)"
-              :key="e[0]"
-              style="margin: 15px"
-            >
-              <b>
-                {{ e[0] }}
-              </b>
-              <div style="margin-left: 15px">
-                {{ e[1] }}
+      <div @contextmenu="onCardRightClick">
+        <div v-if="!hasGeneratedQR" class="cred-text">
+          <span v-if="!error">
+            <div v-if="typeof cred !== 'string' && displayShort">
+              <div
+                v-for="e in Object.entries(cred)"
+                :key="e[0]"
+                style="margin: 15px"
+              >
+                <b>
+                  {{ e[0] }}
+                </b>
+                <div style="margin-left: 15px">
+                  {{ e[1] }}
+                </div>
               </div>
             </div>
-          </div>
-          <pre v-else>{{ credential }}</pre>
-        </span>
-        <span v-else style="color: red">
-          {{ error }}
-        </span>
+            <pre v-else>{{ credential }}</pre>
+          </span>
+          <span v-else style="color: red">
+            {{ error }}
+          </span>
+        </div>
+        <canvas id="canvas" ref="qrcode" :class="{ hidden: !hasGeneratedQR }" />
       </div>
       <div class="flex justify-content-between mt-2">
         <Button
-          icon="pi pi-trash"
-          class="p-button-text p-button-rounded p-button-raised p-button-danger"
-          @click="deleteRes(uri, authFetch)"
+          v-if="isRevokable"
+          icon="pi pi-file-excel"
+          class="
+            p-button-text p-button-rounded p-button-raised p-button-warning
+          "
+          @click="showCredStatusDialog = true"
+        />
+        <Button
+          v-else
+          disabled
+          icon=""
+          class="p-button-rounded p-button-text"
         />
         <Button
           v-if="displayShort"
@@ -118,18 +130,9 @@
           @click="displayShort = true"
         />
         <Button
-          v-if="isRevokable"
-          icon="pi pi-file-excel"
-          class="
-            p-button-text p-button-rounded p-button-raised p-button-warning
-          "
-          @click="showCredStatusDialog = true"
-        />
-        <Button
-          v-else
-          disabled
-          icon=""
-          class="p-button-rounded p-button-text"
+          icon="pi pi-qrcode"
+          class="p-button-text p-button-rounded p-button-raised p-button-info"
+          @click="switchQR"
         />
       </div>
       <CredStatusDialog
@@ -138,6 +141,7 @@
         @setStatusInfo="setCredStatusInfo"
         @hide="showCredStatusDialog = false"
       />
+      <ContextMenu ref="contextMenu" :model="contextMenuItems" />
     </template>
   </Card>
 </template>
@@ -157,6 +161,10 @@ import CredStatusDialog from "@/components/wallet/CredStatusDialog.vue";
 import { useCache } from "@/composables/useCache";
 import { verifyBBS } from "@/lib/bbs";
 import { SVCS } from "@/lib/namespaces";
+import QRCode from "qrcode";
+import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
+
 export default defineComponent({
   name: "Credential",
   components: { CredStatusDialog },
@@ -168,6 +176,7 @@ export default defineComponent({
   setup(props, context) {
     const { authFetch, sessionInfo } = useSolidSession();
     const { isLoggedIn, webId } = toRefs(sessionInfo);
+    const toast = useToast();
 
     const displayShort = ref(true);
 
@@ -389,6 +398,58 @@ export default defineComponent({
       })`;
     });
 
+    const qrcode = ref();
+    const hasGeneratedQR = ref(false);
+    const switchQR = () => {
+      if (hasGeneratedQR.value) {
+        hasGeneratedQR.value = false;
+        return;
+      }
+
+      QRCode.toCanvas(qrcode.value, JSON.stringify(credential.value), (err) => {
+        // callback, that may have an error as argument
+        if (err) {
+          toast.add({
+            severity: "error",
+            summary: "Error on QR-Code!",
+            detail: err,
+            life: 5000,
+          });
+          return;
+        }
+        // no err
+        hasGeneratedQR.value = true;
+      });
+    };
+
+    const contextMenu = ref();
+    const confirm = useConfirm();
+    const contextMenuItems = ref([
+      // {
+      //   label: computed(
+      //     () => `Switch ${!hasGeneratedQR.value ? "to QR code" : "to text"}`
+      //   ),
+      //   icon: "pi pi-fw pi-qrcode",
+      //   command: switchQR,
+      // },
+      {
+        label: "Delete now!",
+        icon: "pi pi-fw pi-trash",
+        command: () =>
+          confirm.require({
+            message: "Are you sure you want to proceed?",
+            header: "Confirmation",
+            icon: "pi pi-exclamation-triangle",
+            accept: () => deleteRes(props.uri, authFetch.value),
+            reject: () => {},
+          }),
+      },
+    ]);
+
+    const onCardRightClick = (e: Event) => {
+      contextMenu.value.show(e);
+    };
+
     return {
       cred,
       credential,
@@ -410,6 +471,12 @@ export default defineComponent({
       setCredStatusInfo,
       credStatusInfo,
       statusComment,
+      contextMenu,
+      contextMenuItems,
+      onCardRightClick,
+      switchQR,
+      qrcode,
+      hasGeneratedQR,
     };
   },
 });
@@ -441,5 +508,13 @@ pre {
 }
 .highlight {
   box-shadow: 0 0 10px 5px var(--primary-color);
+}
+
+.hidden {
+  visibility: hidden;
+}
+#canvas {
+  max-width: 80vw;
+  max-height: 80vw;
 }
 </style>

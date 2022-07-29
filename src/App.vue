@@ -23,6 +23,7 @@
     position="bottom-right"
     :breakpoints="{ '420px': { width: '100%', right: '0', left: '0' } }"
   />
+  <ConfirmDialog />
 </template>
 
 <script lang="ts">
