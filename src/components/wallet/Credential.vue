@@ -139,6 +139,8 @@
           icon="pi pi-qrcode"
           class="p-button-text p-button-rounded p-button-raised p-button-info"
           @click="switchQR"
+          :disabled="credential === 'Credential loading.'"
+          :loading="credential === 'Credential loading.'"
         />
       </div>
       <CredStatusDialog
