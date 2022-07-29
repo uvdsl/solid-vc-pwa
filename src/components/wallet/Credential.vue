@@ -98,7 +98,13 @@
             {{ error }}
           </span>
         </div>
-        <canvas id="canvas" ref="qrcode" :class="{ hidden: !hasGeneratedQR }" />
+        <div class="flex justify-content-center">
+          <canvas
+            id="canvas"
+            ref="qrcode"
+            :class="{ hidden: !hasGeneratedQR }"
+          />
+        </div>
       </div>
       <div class="flex justify-content-between mt-2">
         <Button
@@ -510,9 +516,6 @@ pre {
   box-shadow: 0 0 10px 5px var(--primary-color);
 }
 
-.hidden {
-  visibility: hidden;
-}
 #canvas {
   max-width: 80vw;
   max-height: 80vw;
