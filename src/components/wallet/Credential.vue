@@ -178,6 +178,7 @@ export default defineComponent({
   components: { CredStatusDialog },
   props: {
     uri: { default: "" },
+    json: Object,
     selectFlag: { default: false },
   },
   emits: ["selectedCredential", "filterMe"],
@@ -256,7 +257,10 @@ export default defineComponent({
 
     const cache = useCache();
 
-    if (cache[props.uri] === undefined) {
+    if (props.json) {
+      credential = ref(props.json);
+      cred = ref(props.json["credentialSubject"]);
+    } else if (cache[props.uri] === undefined) {
       getResource(props.uri, authFetch.value)
         .then((resp) =>
           resp.text().then((txt) => {
@@ -414,7 +418,7 @@ export default defineComponent({
         return;
       }
 
-      QRCode.toCanvas(qrcode.value, JSON.stringify(credential.value), (err) => {
+      QRCode.toCanvas(qrcode.value, JSON.stringify(credential.value), { errorCorrectionLevel: 'L' }, (err) => {
         // callback, that may have an error as argument
         if (err) {
           toast.add({

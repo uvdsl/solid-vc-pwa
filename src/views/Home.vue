@@ -139,6 +139,11 @@ export default defineComponent({
         icon: "pi pi-unlock",
         command: () => (displayCredDialog.value = true),
       },
+       {
+        label: "Scanner.",
+        icon: "pi pi-camera",
+        command: () => router.push("/verify/"),
+      },
       // {
       //   label: "Play the keys, yo!.",
       //   icon: "pi pi-key",

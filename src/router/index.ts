@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import Home from "@/views/Home.vue";
 import Wallet from "@/views/holder/Wallet.vue";
 import Creator from "@/views/issuer/Creator.vue";
+import Scanner from "@/views/verifier/Scanner.vue";
 import Inbox from "@/views/Inbox.vue";
 
 const routes: Array<RouteRecordRaw> = [
@@ -24,6 +25,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/issue/",
     name: "Creator",
     component: Creator
+  },
+  {
+    path: "/verify/",
+    name: "Scanner",
+    component: Scanner
   },
   {
     path: "/about",
