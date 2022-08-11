@@ -530,7 +530,5 @@ pre {
 #canvas {
   max-width: 80vw;
   max-height: 80vw;
-  background-color: white;
-  padding: 20x;
 }
 </style>
