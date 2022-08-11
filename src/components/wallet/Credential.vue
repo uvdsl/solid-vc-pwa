@@ -418,20 +418,25 @@ export default defineComponent({
         return;
       }
 
-      QRCode.toCanvas(qrcode.value, JSON.stringify(credential.value), { errorCorrectionLevel: 'L' }, (err) => {
-        // callback, that may have an error as argument
-        if (err) {
-          toast.add({
-            severity: "error",
-            summary: "Error on QR-Code!",
-            detail: err,
-            life: 5000,
-          });
-          return;
+      QRCode.toCanvas(
+        qrcode.value,
+        JSON.stringify(credential.value),
+        { errorCorrectionLevel: "L" },
+        (err) => {
+          // callback, that may have an error as argument
+          if (err) {
+            toast.add({
+              severity: "error",
+              summary: "Error on QR-Code!",
+              detail: err,
+              life: 5000,
+            });
+            return;
+          }
+          // no err
+          hasGeneratedQR.value = true;
         }
-        // no err
-        hasGeneratedQR.value = true;
-      });
+      );
     };
 
     const contextMenu = ref();
@@ -525,5 +530,7 @@ pre {
 #canvas {
   max-width: 80vw;
   max-height: 80vw;
+  background-color: white;
+  padding: 20x;
 }
 </style>

@@ -2,9 +2,9 @@
   <div class="grid">
     <div class="col lg:col-6 lg:col-offset-3">
       <Credential v-if="credential" :json="JSON.parse(credential)" />
-      <qrcode-stream v-else @onInit="onInit" @decode="onDecode" id="scanner">
+      <QrcodeStream v-else @onInit="onInit" @decode="onDecode" id="scanner">
         <div id="scanline" />
-      </qrcode-stream>
+      </QrcodeStream>
     </div>
     <SpeedDial
       showIcon="pi pi-ellipsis-h"
@@ -21,11 +21,12 @@ import router from "@/router";
 import { useToast } from "primevue/usetoast";
 import { computed, defineComponent, ref } from "vue";
 import Credential from "@/components/wallet/Credential.vue";
-
+// @ts-ignore
+import { QrcodeStream } from "qrcode-reader-vue3";
 
 export default defineComponent({
   name: "Scanner",
-  components: {Credential},
+  components: { Credential, QrcodeStream },
   props: {},
   emits: [],
   setup(props, context) {
@@ -73,9 +74,6 @@ export default defineComponent({
         return;
       }
       credential.value = decodedString;
-      // TODO
-      // read in credential -> show cred card
-      // when showing cred card -> show on sped dial camera option
     };
 
     // Speeddial

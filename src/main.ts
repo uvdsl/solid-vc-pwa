@@ -41,17 +41,12 @@ import "primevue/resources/themes/vela-green/theme.css"; // theme
 import "primevue/resources/primevue.min.css"; // core css
 import "primeicons/primeicons.css"; // icons
 
-// @ts-ignore
-import QrcodeReaderVue3 from "qrcode-reader-vue3";
-
 
 const app = createApp(App);
 app.use(router);
 app.use(PrimeVue, { ripple: true });
 app.use(ToastService);
 app.use(ConfirmationService);
-
-app.use(QrcodeReaderVue3);
 
 app.component("Button", Button);
 app.component("Toolbar", Toolbar);
