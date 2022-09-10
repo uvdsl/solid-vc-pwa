@@ -66,7 +66,7 @@ export default defineComponent({
         selectiveCred.value = [];
         Object.entries(credential.value.credentialSubject)
           .map((entry) => {
-            if (!(typeof entry[1] === "string")) {
+            if (!(typeof entry[1] === "string") && !(typeof entry[1] === "boolean") ) {
               return (entry[1] as Array<string>).map((item) => [
                 entry[0],
                 item,
