@@ -123,7 +123,7 @@ export default defineComponent({
           life: 7500,
         });
         return createContainer(
-          `${storage.value}/public/`,
+          `${storage.value}public/`,
           "keys",
           authFetch.value
         ).catch((err) => {
@@ -140,14 +140,14 @@ export default defineComponent({
           return createContainer(`${storage.value}/`, "public", authFetch.value)
             .then(() =>
               createContainer(
-                `${storage.value}/public/`,
+                `${storage.value}public/`,
                 "keys",
                 authFetch.value
               )
             )
             .then(() =>
               putResource(
-                `${storage.value}/public/keys/.acl`,
+                `${storage.value}public/keys/.acl`,
                 publicACL,
                 authFetch.value
               ).catch((err) =>
@@ -183,7 +183,7 @@ export default defineComponent({
           detail: "Creating it now.",
           life: 7500,
         });
-        return createContainer(`${storage.value}/private/`, "keys", fetch)
+        return createContainer(`${storage.value}private/`, "keys", fetch)
           .catch((err) => {
             // make sure public directories exist
             if (!err.message.includes("`404`")) {
@@ -200,7 +200,7 @@ export default defineComponent({
               "private",
               authFetch.value
             ).then(() =>
-              createContainer(`${storage.value}/private/`, "keys", fetch)
+              createContainer(`${storage.value}private/`, "keys", fetch)
             );
           })
           .then(getLocationHeader)
@@ -220,13 +220,13 @@ export default defineComponent({
         // publicKeys.value = [];
         if (storage.value) {
           isLoading.value = true;
-          const publicKeyFolder = `${storage.value}/public/keys/`;
+          const publicKeyFolder = `${storage.value}public/keys/`;
           const pubFolderPromise = getPublicKeyFolder(
             publicKeyFolder,
             authFetch.value
           );
           //   .then((pubKeys) => (publicKeys.value = pubKeys));
-          const privateKeyFolder = `${storage.value}/private/keys/`;
+          const privateKeyFolder = `${storage.value}private/keys/`;
           const privFolderPromise = getPrivateKeyFolder(
             privateKeyFolder,
             authFetch.value
@@ -258,7 +258,7 @@ export default defineComponent({
       let keyPair = await generateKeyPair(undefined, webId?.value);
 
       // store the keys in solid pod
-      const publicKeyFolder = `${storage.value}/public/keys/`;
+      const publicKeyFolder = `${storage.value}public/keys/`;
       const publicKey = {
         "@context": [
           "https://w3id.org/security/v2",
@@ -296,7 +296,7 @@ export default defineComponent({
         { "Content-type": "application/ld+json" }
       );
 
-      const privateKeyFolder = `${storage.value}/private/keys/`;
+      const privateKeyFolder = `${storage.value}private/keys/`;
       const privateKey = {
         "@context": [
           "https://w3id.org/security/v2",
