@@ -69,7 +69,7 @@ export default defineComponent({
 
     // uri of the information resource
     const uri = ref("");
-    uri.value = "https://ik1533.solid.aifb.kit.edu/conf/pidkg/demo";
+    uri.value = "https://ik1533.solidweb.org/conf/semantics/demo";
     // watch(
     //   () => inbox.value,
     //   () => (uri.value = inbox.value),

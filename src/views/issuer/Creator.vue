@@ -145,6 +145,7 @@ export default defineComponent({
       credentialSubject: {
         id: webId?.value,
         type: ["Person"],
+        "http://example.org/vocab#visitedPIDKGdemo" : "true"
       },
     });
     const cont = ref(defaultCredential.value["@context"].slice(0));
