@@ -16,7 +16,10 @@
   </div>
   <div class="grid">
     <div class="col lg:col-6 lg:col-offset-3">
-      <Textarea v-model="content" class="sizing" />
+      <Textarea v-model="content" class="sizing" v-if="content" />
+      <!-- Instead of textarea, Button where user can request VC from me for demo -->
+      <Button v-else-if="isLoggedIn" label="Request Demo Credential" @click="demoRequest" />
+      <span v-else> 401 Unauthenticated : Login using the button in the top-right corner! </span>
     </div>
     <SpeedDial
       v-if="isLoggedIn"
@@ -49,7 +52,7 @@
 <script lang="ts">
 import { useToast } from "primevue/usetoast";
 import { useSolidSession } from "@/composables/useSolidSession";
-import { getResource, postResource } from "@/lib/solidRequests";
+import { createResource, getResource, postResource } from "@/lib/solidRequests";
 import { computed, defineComponent, ref, toRefs, watch } from "vue";
 import CredDialog from "@/components/wallet/CredDialog.vue";
 import DisclosureDialog from "@/components/wallet/DisclosureDialog.vue";
@@ -80,8 +83,8 @@ export default defineComponent({
     );
     // content of the information resource
     const content = ref("");
-    content.value =
-      "This is a demo resource, which you only have access to after you 'unlock' it with a Verifiable Credential issued by the creator of this demo: Alice aka. Christoph aka. uvdsl :)\n\nClick `GET` to access the resource.\n\n    If you get a 401, log in\n                               (button at the top right).\n\n    If you get a 403, unlock the resource\n                               (button at the bottom).";
+    //   content.value =
+    //     "This is a demo resource, which you only have access to after you 'unlock' it with a Verifiable Credential issued by the creator of this demo: Alice aka. Christoph aka. uvdsl :)\n\nClick `GET` to access the resource.\n\n    If you get a 401, log in\n                               (button at the top right).\n\n    If you get a 403, unlock the resource\n                               (button at the bottom).";
     // watch(
     //   () => inbox.value,
     //   () => (content.value = inbox.value !== "" ? "<#this> a <#demo>." : ""),
@@ -139,7 +142,7 @@ export default defineComponent({
         icon: "pi pi-unlock",
         command: () => (displayCredDialog.value = true),
       },
-       {
+      {
         label: "Scanner.",
         icon: "pi pi-camera",
         command: () => router.push("/verify/"),
@@ -221,6 +224,32 @@ export default defineComponent({
         });
     };
 
+    const demoRequest = async () => {
+      createResource(
+        "https://uvdsl.solidweb.org/inbox/",
+        `@prefix schema: <http://schema.org/> .\n
+<> a schema:AskAction;
+   schema:agent <${webId?.value}>.`,
+        authFetch.value
+      )
+        .then(() =>
+          toast.add({
+            severity: "success",
+            summary: "Successful Request!",
+            detail: "Christoph (aka. Alice) received your credential request.",
+            life: 5000,
+          })
+        )
+        .catch((err) =>
+          toast.add({
+            severity: "error",
+            summary: "Error on save!",
+            detail: err,
+            life: 5000,
+          })
+        );
+    };
+
     return {
       uri,
       fetch,
@@ -235,6 +264,7 @@ export default defineComponent({
       isLoggedIn,
       displayKeyDialog,
       signCred,
+      demoRequest,
     };
   },
 });

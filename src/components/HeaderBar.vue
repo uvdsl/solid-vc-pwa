@@ -48,6 +48,7 @@ import { useServiceWorkerNotifications } from "@/composables/useServiceWorkerNot
 import { useSolidWebPush } from "@/composables/useSolidWebPush";
 import { useSolidProfile } from "@/composables/useSolidProfile";
 import { useSolidInbox } from "@/composables/useSolidInbox";
+import { useToast } from "primevue/usetoast";
 
 export default defineComponent({
   name: "HeaderBar",
@@ -64,10 +65,20 @@ export default defineComponent({
     const { name, img, inbox } = useSolidProfile();
     const { ldns } = useSolidInbox();
 
+    const toast = useToast();
+
     const inboxBadge = computed(() => ldns.value.length);
 
     const isToggling = ref(false);
     const togglePush = async () => {
+      toast.add({
+        severity: "error",
+        summary: "Web Push Unavailable!",
+        detail:
+          "The service is currently offline, but will be available again!",
+        life: 5000,
+      });
+      return;
       isToggling.value = true;
       const hasPermission = (await askForNotificationPermission()) == "granted";
       if (!hasPermission) {
